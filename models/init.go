@@ -14,12 +14,12 @@ func init() {
 
 	dbuser := beego.AppConfig.String("mysql::user")
 	dbpass := beego.AppConfig.String("mysql::pass")
-	//dbhost := beego.AppConfig.String("mysql::host")
-	//dbport := beego.AppConfig.String("mysql::port")
+	dbhost := beego.AppConfig.String("mysql::host")
+	dbport := beego.AppConfig.String("mysql::port")
 	dbname := beego.AppConfig.String("mysql::db")
 
-	dbUrl := fmt.Sprintf("%s:%s@/%s?charset=utf8", dbuser, dbpass, dbname)
-	//dbUrl := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8", dbuser, dbpass, dbhost, dbport, dbname)
+	//dbUrl := fmt.Sprintf("%s:%s@/%s?charset=utf8", dbuser, dbpass, dbname)
+	dbUrl := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8", dbuser, dbpass, dbhost, dbport, dbname)
 	beego.Info("Will connect to mysql url", dbUrl)
 	err := orm.RegisterDataBase("default", "mysql", dbUrl)
 	if err != nil {

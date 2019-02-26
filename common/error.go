@@ -1,4 +1,4 @@
-package body
+package common
 
 type ErrorMessage struct {
 	Code    string `json:"code"`

@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"github.com/vntchain/vnt-explorer/body"
 	"encoding/json"
 	"fmt"
 	"github.com/vntchain/vnt-explorer/models"
@@ -38,10 +37,11 @@ func (this *TestController) Get() {
 }
 
 func (this *TestController) Post() {
-	testBody := &body.Test{}
+	testBody := &models.Test{}
 	body := this.Ctx.Input.RequestBody
 	beego.Info("Will create a Test", "body", body)
 	err := json.Unmarshal(body, testBody)
+
 	if err != nil {
 		this.ReturnErrorMsg(fmt.Sprintf("fail err : %s", err.Error()))
 	}
