@@ -3,12 +3,10 @@ package models
 import "time"
 
 type Transaction struct {
-	Id          int
-	Hash        string
-	BlockNumber string
+	Hash        string `orm:"pk"`
 	TimeStamp   time.Time
-	From        string
-	To          string
+	From        *Account `orm:"rel(fk)"`
+	To          *Account `orm:"rel(fk)"`
 	Value       string
 	GasLimit    uint64
 	GasPrice    string
@@ -17,6 +15,7 @@ type Transaction struct {
 	Index       int
 	Input       string
 	IsToken     bool
-	TokenTo     string
+	TokenTo     *Account `orm:"rel(fk)"`
 	TokenAmount string
+	Block       *Block `orm:"rel(fk)"`
 }

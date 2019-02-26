@@ -1,18 +1,17 @@
 package models
 
 type Account struct {
-	Id             int
-	Address        string
-	Vname          string
+	Address        string `orm:"pk"`
+	Vname          string `orm:"unique"`
 	Balance        string
-	TxCount        int
+	TxCount        uint64
 	IsContract     bool
 	ContractName   string
-	ContractOwner  string
+	ContractOwner  *Account `orm:"rel(fk)"`
 	Code           string
 	Abi            string
 	Home           string
-	InitTx         string
+	InitTx         *Transaction `orm:"rel(fk)"`
 	IsToken        bool
 	TokenType      int
 	TokenSymbol    string
