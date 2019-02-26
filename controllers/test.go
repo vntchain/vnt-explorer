@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/vntchain/vnt-explorer/models"
 	"github.com/astaxie/beego/orm"
 	"strconv"
@@ -21,14 +20,14 @@ func (this *TestController) Get() {
 	var err error
 	test.Id, err = strconv.Atoi(id)
 	if err != nil {
-		this.ReturnErrorMsg(fmt.Sprintf("Invalid id, err : %s", err.Error()))
+		this.ReturnErrorMsg("Invalid id, err : %s", err.Error())
 	}
 
 	o := orm.NewOrm()
 
 	err = o.Read(test)
 	if err != nil {
-		this.ReturnErrorMsg(fmt.Sprintf("read error, err : %s", err.Error()))
+		this.ReturnErrorMsg("read error, err : %s", err.Error())
 	}
 
 	this.Ctx.Output.SetStatus(200)
@@ -43,7 +42,7 @@ func (this *TestController) Post() {
 	err := json.Unmarshal(body, testBody)
 
 	if err != nil {
-		this.ReturnErrorMsg(fmt.Sprintf("fail err : %s", err.Error()))
+		this.ReturnErrorMsg("fail err : %s", err.Error())
 	}
 	test := new(models.Test)
 	test.Name = testBody.Name
@@ -51,7 +50,7 @@ func (this *TestController) Post() {
 	id, err := o.Insert(test)
 	test.Id = int(id)
 	if err != nil {
-		this.ReturnErrorMsg(fmt.Sprintf("fail, err : %s", err.Error()))
+		this.ReturnErrorMsg("fail, err : %s", err.Error())
 	} else {
 		this.ReturnData(200, test)
 	}

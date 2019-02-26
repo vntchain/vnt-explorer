@@ -3,7 +3,6 @@ package controllers
 import (
 	"github.com/vntchain/vnt-explorer/models"
 	"encoding/json"
-	"fmt"
 	"github.com/astaxie/beego"
 	"github.com/vntchain/vnt-explorer/common"
 )
@@ -17,20 +16,20 @@ func (this *BlockController) Post() {
 	body := this.Ctx.Input.RequestBody
 	err := json.Unmarshal(body, block)
 	if err != nil {
-		this.ReturnErrorMsg(fmt.Sprintf("Wrong format of block: %s", err.Error()))
+		this.ReturnErrorMsg("Wrong format of block: %s", err.Error())
 		return
 	}
 
 	err, dbblock := block.Insert()
 
 	if err != nil {
-		this.ReturnErrorMsg(fmt.Sprintf("Failed to create block: %s", err.Error()))
+		this.ReturnErrorMsg("Failed to create block: %s", err.Error())
 	} else {
 		this.ReturnData(200, dbblock)
 	}
 }
 
-func (this *BlockController) Get() {
+func (this *BlockController) List() {
 	offset, err := this.GetInt("offset");
 	if err != nil {
 		beego.Warn("Failed to read offset: ", err.Error())
@@ -46,9 +45,26 @@ func (this *BlockController) Get() {
 	block := &models.Block{}
 	err, blocks := block.List(offset, limit)
 	if err != nil {
-		this.ReturnErrorMsg(fmt.Sprintf("Failed to list blocks: %s", err.Error()))
+		this.ReturnErrorMsg("Failed to list blocks: %s", err.Error())
 	} else {
 		this.ReturnData(200, blocks)
 	}
 
+}
+
+func (this *BlockController) Get() {
+	//beego.Info("params", this.Ctx.Input.Params())
+	nOrh := this.Ctx.Input.Param(":n_or_h")
+	if len(nOrh) == 0 {
+		this.ReturnErrorMsg("Failed to get block number or hash", "")
+		return
+	}
+
+	block := &models.Block{}
+	err, dbblock := block.Get(nOrh)
+	if err != nil {
+		this.ReturnErrorMsg("Failed to read block: %s", err.Error())
+	} else {
+		this.ReturnData(200, dbblock)
+	}
 }

@@ -3,6 +3,7 @@ package models
 import (
 	"github.com/astaxie/beego/orm"
 	"github.com/astaxie/beego"
+	"strings"
 )
 
 type Block struct {
@@ -38,4 +39,19 @@ func (b *Block) List(offset, limit int) (error, []*Block) {
 	var blocks []*Block
 	_, err := qs.Offset(offset).Limit(limit).All(&blocks)
 	return err, blocks
+}
+
+func (b *Block) Get(nOrh string, fields ...string) (error, *Block) {
+	o := orm.NewOrm()
+
+	var err error
+	if strings.HasPrefix(nOrh, "0x") {
+		b.Hash = nOrh
+		err = o.Read(b, fields...)
+	} else {
+		b.Number = nOrh
+		err = o.Read(b, fields...)
+	}
+
+	return err, b
 }

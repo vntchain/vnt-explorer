@@ -3,13 +3,15 @@ package controllers
 import (
 	"github.com/astaxie/beego"
 	"github.com/vntchain/vnt-explorer/common"
+	"fmt"
 )
 
 type BaseController struct {
 	beego.Controller
 }
 
-func (c *BaseController) ReturnErrorMsg(msg string) {
+func (c *BaseController) ReturnErrorMsg(format, err string) {
+	msg := fmt.Sprintf(format, err)
 	beego.Error(msg)
 	c.Ctx.Output.SetStatus(500)
 	c.Data["json"] = &common.ErrorMessage{
