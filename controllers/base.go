@@ -17,3 +17,9 @@ func (c *BaseController) ReturnErrorMsg(msg string) {
 	}
 	c.ServeJSON()
 }
+
+func (c *BaseController) ReturnData(status int, data interface{}) {
+	c.Ctx.Output.SetStatus(status)
+	c.Data["json"] = data
+	c.ServeJSON()
+}

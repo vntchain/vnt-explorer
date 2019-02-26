@@ -1,10 +1,8 @@
 package models
 
-import "time"
-
 type Transaction struct {
 	Hash        string `orm:"pk"`
-	TimeStamp   time.Time `orm:"auto_now_add;type(datetime)"`
+	TimeStamp   int64
 	From        string `orm:"index"`
 	To          string `orm:"index"`
 	Value       string

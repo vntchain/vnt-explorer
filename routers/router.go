@@ -11,4 +11,6 @@ func init() {
 	beego.Router("/v1/test", &controllers.TestController{})
 
 	beego.Router("/v1/test/:id", &controllers.TestController{})
+
+	beego.Router("/v1/blocks", &controllers.BlockController{})
 }

@@ -49,12 +49,10 @@ func (this *TestController) Post() {
 	test.Name = testBody.Name
 	o := orm.NewOrm()
 	id, err := o.Insert(test)
+	test.Id = int(id)
 	if err != nil {
 		this.ReturnErrorMsg(fmt.Sprintf("fail, err : %s", err.Error()))
+	} else {
+		this.ReturnData(200, test)
 	}
-
-	this.Ctx.Output.SetStatus(200)
-	test.Id = int(id)
-	this.Data["json"] = test
-	this.ServeJSON()
 }

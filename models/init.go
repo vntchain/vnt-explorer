@@ -27,7 +27,7 @@ func init() {
 		panic(err.Error())
 	}
 
-	orm.RunSyncdb("default", true, true)
+	orm.RunSyncdb("default", false, true)
 }
 
 func registerModel() {
