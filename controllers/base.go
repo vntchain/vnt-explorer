@@ -2,7 +2,7 @@ package controllers
 
 import (
 	"github.com/astaxie/beego"
-	"github.com/vntchain/Masami/backEnd/protocols"
+	"github.com/vntchain/vnt-explorer/body"
 )
 
 type BaseController struct {
@@ -12,7 +12,7 @@ type BaseController struct {
 func (c *BaseController) ReturnErrorMsg(msg string) {
 	beego.Error(msg)
 	c.Ctx.Output.SetStatus(500)
-	c.Data["json"] = &protocols.ErrorMessage{
+	c.Data["json"] = &body.ErrorMessage{
 		Message: msg,
 	}
 	c.ServeJSON()

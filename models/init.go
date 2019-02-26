@@ -5,7 +5,6 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/orm"
-	"github.com/vntchain/go-vnt/log"
 )
 
 func init() {
@@ -24,7 +23,7 @@ func init() {
 	beego.Info("Will connect to mysql url", dbUrl)
 	err := orm.RegisterDataBase("default", "mysql", dbUrl)
 	if err != nil {
-		log.Error("failed to register database", err)
+		beego.Error("failed to register database", err)
 		panic(err.Error())
 	}
 
