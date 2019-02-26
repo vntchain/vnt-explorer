@@ -7,11 +7,11 @@ type Account struct {
 	TxCount        uint64
 	IsContract     bool
 	ContractName   string
-	ContractOwner  *Account `orm:"rel(fk)"`
+	ContractOwner  string `orm:"index"`
 	Code           string
 	Abi            string
 	Home           string
-	InitTx         *Transaction `orm:"rel(fk)"`
+	InitTx         string
 	IsToken        bool
 	TokenType      int
 	TokenSymbol    string

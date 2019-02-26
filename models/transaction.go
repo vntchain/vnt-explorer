@@ -4,9 +4,9 @@ import "time"
 
 type Transaction struct {
 	Hash        string `orm:"pk"`
-	TimeStamp   time.Time
-	From        *Account `orm:"rel(fk)"`
-	To          *Account `orm:"rel(fk)"`
+	TimeStamp   time.Time `orm:"auto_now_add;type(datetime)"`
+	From        string `orm:"index"`
+	To          string `orm:"index"`
 	Value       string
 	GasLimit    uint64
 	GasPrice    string
@@ -15,7 +15,7 @@ type Transaction struct {
 	Index       int
 	Input       string
 	IsToken     bool
-	TokenTo     *Account `orm:"rel(fk)"`
+	TokenTo     string `orm:"index"`
 	TokenAmount string
-	Block       *Block `orm:"rel(fk)"`
+	BlockNumber *Block `orm:"rel(fk)";index`
 }
