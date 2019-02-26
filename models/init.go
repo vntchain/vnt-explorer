@@ -2,9 +2,9 @@ package models
 
 import (
 	"fmt"
-	_ "github.com/go-sql-driver/mysql"
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/orm"
+	_ "github.com/go-sql-driver/mysql"
 )
 
 func init() {
@@ -33,4 +33,9 @@ func init() {
 func registerModel() {
 	beego.Info("Will register models.")
 	orm.RegisterModel(new(Test))
+	orm.RegisterModel(new(Account))
+	orm.RegisterModel(new(Block))
+	orm.RegisterModel(new(Node))
+	orm.RegisterModel(new(TokenBalance))
+	orm.RegisterModel(new(Transaction))
 }
