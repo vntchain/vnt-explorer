@@ -13,4 +13,5 @@ func init() {
 	beego.Router("/v1/block/:n_or_h", &controllers.BlockController{})
 
 	beego.Router("/v1/txs", &controllers.TransactionController{}, "get:List;post:Post")
+	beego.Router("/v1/txs/count", &controllers.TransactionController{}, "get:Count")
 }

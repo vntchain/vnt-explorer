@@ -25,7 +25,7 @@ func (this *BlockController) Post() {
 	if err != nil {
 		this.ReturnErrorMsg("Failed to create block: %s", err.Error())
 	} else {
-		this.ReturnData(200, block)
+		this.ReturnData(block)
 	}
 }
 
@@ -49,7 +49,7 @@ func (this *BlockController) List() {
 	if err != nil {
 		this.ReturnErrorMsg("Failed to list blocks: %s", err.Error())
 	} else {
-		this.ReturnData(200, blocks)
+		this.ReturnData(blocks)
 	}
 
 }
@@ -70,7 +70,7 @@ func (this *BlockController) Get() {
 	if err != nil {
 		this.ReturnErrorMsg("Failed to read block: %s", err.Error())
 	} else {
-		this.ReturnData(200, dbblock)
+		this.ReturnData(dbblock)
 	}
 }
 
@@ -80,6 +80,6 @@ func (this *BlockController) Count() {
 	if err != nil {
 		this.ReturnErrorMsg("Failed to get block count: %s", err.Error())
 	} else {
-		this.ReturnData(200, count)
+		this.ReturnData(count)
 	}
 }

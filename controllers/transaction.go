@@ -26,7 +26,7 @@ func (this *TransactionController) Post() {
 	if err != nil {
 		this.ReturnErrorMsg("Failed to create transaction: %s", err.Error())
 	} else {
-		this.ReturnData(200, tx)
+		this.ReturnData(tx)
 	}
 }
 
@@ -60,6 +60,26 @@ func (this *TransactionController) List() {
 	if err != nil {
 		this.ReturnErrorMsg("Failed to list transactions: ", err.Error())
 	} else {
-		this.ReturnData(200, txs)
+		this.ReturnData(txs)
+	}
+}
+
+func (this *TransactionController) Count() {
+	block := this.GetString("block")
+	account := this.GetString("account")
+
+	isToken, err := this.GetInt("istoken")
+	if err != nil {
+		beego.Warn("Failed to read istoken: ", err.Error())
+		isToken = -1
+	}
+
+	tx := &models.Transaction{}
+	count, err := tx.Count(block, account, isToken)
+
+	if err != nil {
+		this.ReturnErrorMsg("Failed to count transactions: ", err.Error())
+	} else {
+		this.ReturnData(count)
 	}
 }

@@ -23,19 +23,7 @@ type Transaction struct {
 	BlockNumber *Block `orm:"rel(fk)";index`
 }
 
-func (t *Transaction) Insert() error {
-	o := orm.NewOrm()
-	_, err := o.Insert(t)
-	return err
-}
-
-func (t *Transaction) List(offset, limit int64, block string, account string, isToken int, fields ...string) ([]*Transaction, error) {
-	o := orm.NewOrm()
-
-	beego.Info("block:", block, "account:", account, "istoken:", isToken)
-
-	qs := o.QueryTable(t).Offset(offset).Limit(limit);
-
+func makeCond(block string, account string, isToken int) *orm.Condition {
 	cond := orm.NewCondition()
 	if len(block) > 0 {
 		cond = cond.And("block_number_id", block)
@@ -51,10 +39,37 @@ func (t *Transaction) List(offset, limit int64, block string, account string, is
 	} else if isToken == 1 {
 		cond = cond.And("is_token", true)
 	}
+	return cond
+}
+
+func (t *Transaction) Insert() error {
+	o := orm.NewOrm()
+	_, err := o.Insert(t)
+	return err
+}
+
+func (t *Transaction) List(offset, limit int64, block string, account string, isToken int, fields ...string) ([]*Transaction, error) {
+	o := orm.NewOrm()
+
+	beego.Info("block:", block, "account:", account, "istoken:", isToken)
+
+	qs := o.QueryTable(t).Offset(offset).Limit(limit);
+
+	cond := makeCond(block, account, isToken)
 
 	qs = qs.SetCond(cond)
 
 	var txs []*Transaction
 	_, err := qs.All(&txs, fields...)
 	return txs, err
+}
+
+func (t *Transaction) Count(block string, account string, isToken int) (int64, error) {
+	o := orm.NewOrm()
+	qs := o.QueryTable(t)
+	cond := makeCond(block, account, isToken)
+
+	qs = qs.SetCond(cond)
+
+	return qs.Count()
 }

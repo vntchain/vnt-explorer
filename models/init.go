@@ -32,7 +32,6 @@ func init() {
 
 func registerModel() {
 	beego.Info("Will register models.")
-	orm.RegisterModel(new(Test))
 	orm.RegisterModel(new(Account))
 	orm.RegisterModel(new(Block))
 	orm.RegisterModel(new(Node))
