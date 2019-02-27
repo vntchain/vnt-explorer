@@ -22,36 +22,40 @@ type Block struct {
 	Transactions []*Transaction `orm:"reverse(many)"`
 }
 
-func (b *Block) Insert() (error, *Block) {
+func (b *Block) Insert() error {
 	o := orm.NewOrm()
-	id, err := o.Insert(b)
-	beego.Info("Created block with id: ", id)
-	if err != nil {
-		return err, nil
-	}
-	return nil, b
+	_, err := o.Insert(b)
+	return err
 }
 
-func (b *Block) List(offset, limit int) (error, []*Block) {
+func (b *Block) List(offset, limit int64, fields ...string) ([]*Block, error) {
 	o := orm.NewOrm()
 	qs := o.QueryTable(b)
 
 	var blocks []*Block
-	_, err := qs.Offset(offset).Limit(limit).All(&blocks)
-	return err, blocks
+	_, err := qs.Offset(offset).Limit(limit).All(&blocks, fields...)
+	return blocks, err
 }
 
-func (b *Block) Get(nOrh string, fields ...string) (error, *Block) {
+func (b *Block) Get(nOrh string, fields ...string) (*Block, error) {
 	o := orm.NewOrm()
 
 	var err error
 	if strings.HasPrefix(nOrh, "0x") {
+		beego.Info("Will read block by hash: ", nOrh)
 		b.Hash = nOrh
-		err = o.Read(b, fields...)
+		err = o.Read(b, "Hash")
 	} else {
+		beego.Info("Will read block by number: ", nOrh)
 		b.Number = nOrh
-		err = o.Read(b, fields...)
+		err = o.Read(b, "Number")
 	}
 
-	return err, b
+	return b, err
+}
+
+func (b *Block) Count() (int64, error) {
+	o := orm.NewOrm()
+	cnt, err := o.QueryTable(b).Count()
+	return cnt, err
 }

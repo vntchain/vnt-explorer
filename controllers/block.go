@@ -20,30 +20,32 @@ func (this *BlockController) Post() {
 		return
 	}
 
-	err, dbblock := block.Insert()
+	err = block.Insert()
 
 	if err != nil {
 		this.ReturnErrorMsg("Failed to create block: %s", err.Error())
 	} else {
-		this.ReturnData(200, dbblock)
+		this.ReturnData(200, block)
 	}
 }
 
 func (this *BlockController) List() {
-	offset, err := this.GetInt("offset");
+	offset, err := this.GetInt64("offset");
 	if err != nil {
 		beego.Warn("Failed to read offset: ", err.Error())
 		offset = common.DefaultOffset
 	}
 
-	limit, err := this.GetInt("limit")
+	limit, err := this.GetInt64("limit")
 	if err != nil {
 		beego.Warn("Failed to read limit: ", err.Error())
 		limit = common.DefaultPageSize
 	}
 
+	fields := this.getFields()
+
 	block := &models.Block{}
-	err, blocks := block.List(offset, limit)
+	blocks, err := block.List(offset, limit, fields...)
 	if err != nil {
 		this.ReturnErrorMsg("Failed to list blocks: %s", err.Error())
 	} else {
@@ -60,11 +62,24 @@ func (this *BlockController) Get() {
 		return
 	}
 
+	fields := this.getFields()
+	beego.Info("Will read colums: ", fields, "number", nOrh)
+
 	block := &models.Block{}
-	err, dbblock := block.Get(nOrh)
+	dbblock, err := block.Get(nOrh, fields...)
 	if err != nil {
 		this.ReturnErrorMsg("Failed to read block: %s", err.Error())
 	} else {
 		this.ReturnData(200, dbblock)
+	}
+}
+
+func (this *BlockController) Count() {
+	block := &models.Block{}
+	count, err := block.Count()
+	if err != nil {
+		this.ReturnErrorMsg("Failed to get block count: %s", err.Error())
+	} else {
+		this.ReturnData(200, count)
 	}
 }
