@@ -64,6 +64,26 @@ func (this *TransactionController) List() {
 	}
 }
 
+func (this *TransactionController) Get() {
+	//beego.Info("params", this.Ctx.Input.Params())
+	txHash := this.Ctx.Input.Param(":tx_hash")
+	if len(txHash) == 0 {
+		this.ReturnErrorMsg("Failed to get block number or hash", "")
+		return
+	}
+
+	fields := this.getFields()
+	beego.Info("Will read colums: ", fields, "txhash", txHash)
+
+	tx := &models.Transaction{}
+	dbTx, err := tx.Get(txHash, fields...)
+	if err != nil {
+		this.ReturnErrorMsg("Failed to read transaction: %s", err.Error())
+	} else {
+		this.ReturnData(dbTx)
+	}
+}
+
 func (this *TransactionController) Count() {
 	block := this.GetString("block")
 	account := this.GetString("account")

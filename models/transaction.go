@@ -64,6 +64,17 @@ func (t *Transaction) List(offset, limit int64, block string, account string, is
 	return txs, err
 }
 
+func (t *Transaction) Get(hash string, fields ...string) (*Transaction, error) {
+	o := orm.NewOrm()
+
+	var err error
+
+	t.Hash = hash
+	err = o.Read(t, "Hash")
+
+	return t, err
+}
+
 func (t *Transaction) Count(block string, account string, isToken int) (int64, error) {
 	o := orm.NewOrm()
 	qs := o.QueryTable(t)
