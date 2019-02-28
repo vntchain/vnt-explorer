@@ -28,7 +28,7 @@ func (this *TokenBalanceController) Post() {
 	}
 }
 
-func (this *TokenBalanceController) ListByAddress() {
+func (this *TokenBalanceController) ListByToken() {
 	tokenAddress := this.Ctx.Input.Param(":address")
 
 	offset, err := this.GetInt("offset")
@@ -43,14 +43,47 @@ func (this *TokenBalanceController) ListByAddress() {
 		limit = common.DefaultPageSize
 	}
 
-	tokenBalance := &models.TokenBalance{
-		Token: tokenAddress,
-	}
-	dbItemList, err := tokenBalance.List(offset, limit)
+	tokenBalance := &models.TokenBalance{}
+	dbItemList, err := tokenBalance.List("", tokenAddress, offset, limit)
 	if err != nil {
 		this.ReturnErrorMsg("Failed to list TokenBalance: %s", err.Error())
 	} else {
 		this.ReturnData(dbItemList)
 	}
 
+}
+
+func (this *TokenBalanceController) ListByAccount() {
+	account := this.Ctx.Input.Param(":address")
+
+	offset, err := this.GetInt("offset")
+	if err != nil {
+		beego.Warn("Failed to read offset: ", err.Error())
+		offset = common.DefaultOffset
+	}
+
+	limit, err := this.GetInt("limit")
+	if err != nil {
+		beego.Warn("Failed to read limit: ", err.Error())
+		limit = common.DefaultPageSize
+	}
+
+	tokenBalance := &models.TokenBalance{}
+	dbItemList, err := tokenBalance.List(account, "", offset, limit)
+	if err != nil {
+		this.ReturnErrorMsg("Failed to list TokenBalance: %s", err.Error())
+	} else {
+		this.ReturnData(dbItemList)
+	}
+
+}
+
+func (this *TokenBalanceController) CountByToken() {
+	token := &models.TokenBalance{}
+	count, err := token.CountByToken()
+	if err != nil {
+		this.ReturnErrorMsg("Failed to get token count: %s", err.Error())
+	} else {
+		this.ReturnData(count)
+	}
 }
