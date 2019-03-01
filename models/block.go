@@ -8,7 +8,7 @@ import (
 
 type Block struct {
 	Number       string `orm:"pk"`
-	TimeStamp    int64
+	TimeStamp    uint64
 	TxCount      int
 	Hash         string   `orm:"unique"`
 	ParentHash   string   // FIXME 这里是否需要设置成外键
@@ -52,6 +52,25 @@ func (b *Block) Get(nOrh string, fields ...string) (*Block, error) {
 	}
 
 	return b, err
+}
+
+func (b *Block) Last() (*Block, error) {
+	o := orm.NewOrm()
+
+	qs := o.QueryTable(b).OrderBy("-Number").Limit(1)
+
+	var blocks []*Block
+	_, err := qs.All(&blocks)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if len(blocks) == 0 {
+		return nil, nil
+	}
+
+	return blocks[0], nil
 }
 
 func (b *Block) Count() (int64, error) {
