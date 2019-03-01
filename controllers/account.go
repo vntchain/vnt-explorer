@@ -28,6 +28,21 @@ func (this *AccountController) Post() {
 	}
 }
 
+func (this *AccountController) getCond() (int, int) {
+	isContract, err := this.GetInt("isContract")
+	if err != nil {
+		beego.Warn("Failed to read isContract: ", err.Error())
+		isContract = -1
+	}
+
+	isToken, err := this.GetInt("isToken")
+	if err != nil {
+		beego.Warn("Failed to read isToken: ", err.Error())
+		isToken = -1
+	}
+	return isContract, isToken
+}
+
 func (this *AccountController) List() {
 	offset, err := this.GetInt("offset")
 	if err != nil {
@@ -41,8 +56,14 @@ func (this *AccountController) List() {
 		limit = common.DefaultPageSize
 	}
 
+	isContract, isToken := this.getCond()
+
+	// TODO 这里的排序是字典序，需进行修改
+	order := this.GetString("order")
+	fields := this.getFields()
+
 	account := &models.Account{}
-	accounts, err := account.List(offset, limit)
+	accounts, err := account.List(isContract, isToken, order, offset, limit, fields)
 	if err != nil {
 		this.ReturnErrorMsg("Failed to list accounts: %s", err.Error())
 	} else {
@@ -58,6 +79,8 @@ func (this *AccountController) Get() {
 		this.ReturnErrorMsg("Failed to get address", "")
 		return
 	}
+	// TODO 这边暂时未对fields进行处理
+	//fields := this.getFields()
 
 	account := &models.Account{}
 	dbaccount, err := account.Get(address)
@@ -69,8 +92,10 @@ func (this *AccountController) Get() {
 }
 
 func (this *AccountController) Count() {
+	isContract, isToken := this.getCond()
+
 	account := &models.Account{}
-	count, err := account.Count()
+	count, err := account.Count(isContract, isToken)
 	if err != nil {
 		this.ReturnErrorMsg("Failed to get accounts count: %s", err.Error())
 	} else {

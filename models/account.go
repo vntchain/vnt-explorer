@@ -32,12 +32,19 @@ func (a *Account) Insert() error {
 	return err
 }
 
-func (a *Account) List(offset, limit int) ([]*Account, error) {
+func (a *Account) List(isContract, isToken int, order string, offset, limit int, fields []string) ([]*Account, error) {
 	o := orm.NewOrm()
 	qs := o.QueryTable(a)
+	cond := a.makeCond(isContract, isToken)
+	qs = qs.SetCond(cond)
 
+	if order == "asc" {
+		qs = qs.OrderBy("Balance")
+	} else {
+		qs = qs.OrderBy("-Balance")
+	}
 	var accounts []*Account
-	_, err := qs.Offset(offset).Limit(limit).All(&accounts)
+	_, err := qs.Offset(offset).Limit(limit).All(&accounts, fields...)
 	return accounts, err
 }
 
@@ -48,8 +55,22 @@ func (a *Account) Get(address string) (*Account, error) {
 	return a, err
 }
 
-func (a *Account) Count() (int64, error) {
+func (a *Account) Count(isContract, isToken int) (int64, error) {
 	o := orm.NewOrm()
-	cnt, err := o.QueryTable(a).Count()
+	qs := o.QueryTable(a)
+	cond := a.makeCond(isContract, isToken)
+	qs = qs.SetCond(cond)
+	cnt, err := qs.Count()
 	return cnt, err
+}
+
+func (a *Account) makeCond(isContract, isToken int) *orm.Condition {
+	cond := orm.NewCondition()
+	if isContract >= 0 {
+		cond = cond.And("IsContract", isContract == 1)
+	}
+	if isToken >= 0 {
+		cond = cond.And("IsToken", isToken == 1)
+	}
+	return cond
 }

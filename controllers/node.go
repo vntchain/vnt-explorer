@@ -41,8 +41,12 @@ func (this *NodeController) List() {
 		limit = common.DefaultPageSize
 	}
 
+	order := this.GetString("order")
+	fields := this.getFields()
+
+	// TODO 这里的排序是字典序，需进行修改
 	node := &models.Node{}
-	nodes, err := node.List(offset, limit)
+	nodes, err := node.List(order, offset, limit, fields)
 	if err != nil {
 		this.ReturnErrorMsg("Failed to list nodes: %s", err.Error())
 	} else {
