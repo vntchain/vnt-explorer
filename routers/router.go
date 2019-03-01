@@ -24,6 +24,5 @@ func init() {
 	beego.Router("/v1/nodes", &controllers.NodeController{}, "get:List;post:Post")
 	beego.Router("/v1/node/:address", &controllers.NodeController{})
 
-	beego.Router("/v1/tokens/count", &controllers.TokenBalanceController{}, "get:CountByToken")
 	beego.Router("/v1/token/:address/holders", &controllers.TokenBalanceController{}, "get:ListByToken")
 }

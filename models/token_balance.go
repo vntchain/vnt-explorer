@@ -28,11 +28,10 @@ func (t *TokenBalance) List(account string, token string, offset, limit int) ([]
 	qs := o.QueryTable(t)
 	cond := orm.NewCondition()
 	if len(account) > 0 {
-		cond = cond.And("account", account)
+		cond = cond.And("Account", account)
 	} else if len(token) > 0 {
-		cond = cond.And("token", token)
+		cond = cond.And("Token", token)
 	}
-
 	qs = qs.SetCond(cond)
 	var tokens []*TokenBalance
 	_, err := qs.Offset(offset).Limit(limit).All(&tokens)
@@ -52,10 +51,4 @@ func (t *TokenBalance) GetById(id int) (*TokenBalance, error) {
 	t.Id = id
 	err := o.Read(t)
 	return t, err
-}
-
-func (t *TokenBalance) CountByToken() (int64, error) {
-	o := orm.NewOrm()
-	cnt, err := o.QueryTable(t).GroupBy("Token").Count()
-	return cnt, err
 }

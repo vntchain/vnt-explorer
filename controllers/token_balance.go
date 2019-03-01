@@ -77,13 +77,3 @@ func (this *TokenBalanceController) ListByAccount() {
 	}
 
 }
-
-func (this *TokenBalanceController) CountByToken() {
-	token := &models.TokenBalance{}
-	count, err := token.CountByToken()
-	if err != nil {
-		this.ReturnErrorMsg("Failed to get token count: %s", err.Error())
-	} else {
-		this.ReturnData(count)
-	}
-}

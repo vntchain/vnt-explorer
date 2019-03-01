@@ -21,12 +21,18 @@ func (n *Node) Insert() error {
 	return err
 }
 
-func (n *Node) List(offset, limit int) ([]*Node, error) {
+func (n *Node) List(order string, offset, limit int, fields []string) ([]*Node, error) {
 	o := orm.NewOrm()
 	qs := o.QueryTable(n)
 
+	if order == "asc" {
+		qs = qs.OrderBy("Votes")
+	} else {
+		qs = qs.OrderBy("-Votes")
+	}
+
 	var nodes []*Node
-	_, err := qs.Offset(offset).Limit(limit).All(&nodes)
+	_, err := qs.Offset(offset).Limit(limit).All(&nodes, fields...)
 	return nodes, err
 }
 
