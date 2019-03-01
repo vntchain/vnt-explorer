@@ -19,10 +19,11 @@ func init() {
 	beego.Router("/v1/accounts", &controllers.AccountController{}, "get:List")
 	beego.Router("/v1/accounts/count", &controllers.AccountController{}, "get:Count")
 	beego.Router("/v1/account/:address", &controllers.AccountController{})
-	// beego.Router("/v1/account/:address/tokens",&controllers.NodeController{})
+	beego.Router("/v1/account/:address/tokens", &controllers.TokenBalanceController{}, "get:ListByAccount")
 
 	beego.Router("/v1/nodes", &controllers.NodeController{}, "get:List")
 	beego.Router("/v1/node/:address", &controllers.NodeController{})
 
-	beego.Router("/v1/token/:address", &controllers.TokenBalanceController{}, "get:ListByAddress")
+	beego.Router("/v1/tokens/count", &controllers.TokenBalanceController{}, "get:CountByToken")
+	beego.Router("/v1/token/:address/holders", &controllers.TokenBalanceController{}, "get:ListByToken")
 }
