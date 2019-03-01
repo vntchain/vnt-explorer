@@ -16,19 +16,37 @@ func main() {
 
 	for {
 		rmtHgt, localHgt := checkHeight()
-		beego.Info(fmt.Sprintf("Local height: %d, rmtHeight: %d", localHgt, rmtHgt))
 
+		//localHgt = 89
+		//rmtHgt = 20000
+		beego.Info(fmt.Sprintf("Local height: %d, rmtHeight: %d", localHgt, rmtHgt))
 		if localHgt == rmtHgt {
-			time.Sleep(1)
+			time.Sleep(1 * time.Second)
 			continue
 		}
 
 		for localHgt < rmtHgt {
-			data.GetBlock(localHgt+1)
-			break;
-		}
+			block, txs, witnesses := data.GetBlock(localHgt+1)
 
-		break
+			beego.Info("Block:", block)
+			beego.Info("txs:", txs)
+			beego.Info("witness:", witnesses)
+
+			block.Insert()
+
+			for _, txHash := range txs {
+				tx := data.GetTx(fmt.Sprintf("%v", txHash))
+				beego.Info("Got transaction: ", tx)
+				err := tx.Insert()
+				if err != nil {
+					msg := fmt.Sprintf("Failed to insert transaction: %s", err.Error())
+					panic(msg)
+				}
+			}
+
+			localHgt = localHgt + 1
+		}
+		//break
 	}
 }
 

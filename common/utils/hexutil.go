@@ -28,7 +28,7 @@ encodes as "0x".
 Integers are encoded using the least amount of digits (no leading zero digits). Their
 encoding may be of uneven length. The number zero encodes as "0x0".
 */
-package data
+package utils
 
 import (
 	"encoding/hex"

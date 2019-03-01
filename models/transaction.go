@@ -16,11 +16,11 @@ type Transaction struct {
 	GasUsed     uint64
 	Nonce       uint64
 	Index       int
-	Input       string
+	Input       string	`orm:"type(text)"`
 	IsToken     bool
 	TokenTo     string `orm:"index"`
 	TokenAmount string
-	BlockNumber *Block `orm:"rel(fk)";index`
+	BlockNumber string `orm:"index"`
 }
 
 func makeCond(block string, account string, isToken int) *orm.Condition {

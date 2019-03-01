@@ -19,7 +19,6 @@ type Block struct {
 	BlockReward  string
 	ExtraData    string
 	Witnesses    []*Node        `orm:"rel(m2m)"`
-	Transactions []*Transaction `orm:"reverse(many)"`
 }
 
 func (b *Block) Insert() error {
@@ -57,7 +56,7 @@ func (b *Block) Get(nOrh string, fields ...string) (*Block, error) {
 func (b *Block) Last() (*Block, error) {
 	o := orm.NewOrm()
 
-	qs := o.QueryTable(b).OrderBy("-Number").Limit(1)
+	qs := o.QueryTable(b).OrderBy("-TimeStamp").Limit(1)
 
 	var blocks []*Block
 	_, err := qs.All(&blocks)

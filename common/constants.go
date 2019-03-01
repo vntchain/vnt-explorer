@@ -8,6 +8,8 @@ const (
 const (
 	Rpc_BlockNumber 		= "core_blockNumber"
 	Rpc_GetBlockByNumber 	= "core_getBlockByNumber"
+	Rpc_GetTxByHash		 	= "core_getTransactionByHash"
+	Rpc_GetTxReceipt	 	= "core_getTransactionReceipt"
 )
 
 const (

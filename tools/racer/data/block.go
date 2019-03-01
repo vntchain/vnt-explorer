@@ -8,6 +8,7 @@ import (
 	"github.com/vntchain/vnt-explorer/common"
 	"math/big"
 	"strings"
+	"github.com/vntchain/vnt-explorer/common/utils"
 )
 
 func GetLocalHeight() int64 {
@@ -62,21 +63,16 @@ func GetRemoteHeight() int64 {
 
 	beego.Info("Response body", resp)
 
-	blockNumber, err := DecodeBig(resp.Result.(string))
-	if err != nil {
-		msg := fmt.Sprintf("Failed to decode block number: %s", err.Error())
-		beego.Error(msg)
-		panic(msg)
-	}
+	blockNumber := common.Hex(resp.Result.(string)).ToInt64()
 
-	return blockNumber.Int64()
+	return blockNumber
 }
 
-func GetBlock(number int64) {
+func GetBlock(number int64) (*models.Block, []interface{}, []interface{}) {
 	rpc := common.NewRpc()
 	rpc.Method = common.Rpc_GetBlockByNumber
 
-	hex := Encode(big.NewInt(number).Bytes())
+	hex := utils.Encode(big.NewInt(number).Bytes())
 	if strings.HasPrefix(hex, "0x0") {
 		hex = "0x" + hex[3:]
 	}
@@ -86,68 +82,85 @@ func GetBlock(number int64) {
 	resp := callRpc(rpc)
 
 	blockMap := resp.Result.(map[string]interface{})
-	beego.Info("Block: ", blockMap)
 
-	bNumber, err := DecodeUint64(blockMap["number"].(string))
-	if err != nil {
-		msg := fmt.Sprintf("Failed to decode block number: %s", err.Error())
-		beego.Error(msg)
-		panic(msg)
-	}
+	beego.Info("BlockMap: ", blockMap)
 
-	timestamp, err := DecodeUint64(blockMap["timestamp"].(string))
-	if err != nil {
-		msg := fmt.Sprintf("Failed to decode timestamp: %s", err.Error())
-		beego.Error(msg)
-		panic(msg)
-	}
+	bNumber := common.Hex(blockMap["number"].(string)).ToUint64()
 
-	size, err := DecodeUint64(blockMap["size"].(string))
-	if err != nil {
-		msg := fmt.Sprintf("Failed to decode size: %s", err.Error())
-		beego.Error(msg)
-		panic(msg)
-	}
+	timestamp := common.Hex(blockMap["timestamp"].(string)).ToUint64()
 
-	gasUsed, err := DecodeUint64(blockMap["gasUsed"].(string))
-	if err != nil {
-		msg := fmt.Sprintf("Failed to decode gasUsed: %s", err.Error())
-		beego.Error(msg)
-		panic(msg)
-	}
+	size := common.Hex(blockMap["size"].(string)).ToUint64()
 
-	gasLimit, err := DecodeUint64(blockMap["gasLimit"].(string))
-	if err != nil {
-		msg := fmt.Sprintf("Failed to decode gasLimit: %s", err.Error())
-		beego.Error(msg)
-		panic(msg)
-	}
+	gasUsed := common.Hex(blockMap["gasUsed"].(string)).ToUint64()
+
+	gasLimit := common.Hex(blockMap["gasLimit"].(string)).ToUint64()
 
 	b := &models.Block{
-		Number: string(bNumber),
+		Number: fmt.Sprintf("%d", bNumber),
 		TimeStamp: timestamp,
 		Hash: blockMap["hash"].(string),
 		ParentHash: blockMap["parentHash"].(string),
 		Producer: blockMap["producer"].(string),
-		Size: string(size),
+		Size: fmt.Sprintf("%d", size),
 		GasUsed: gasUsed,
 		GasLimit: gasLimit,
 		ExtraData: blockMap["extraData"].(string),
 	}
 
-	var txs, witnesses []string
+	var txs, witnesses []interface{}
 	var ok bool
-	if txs, ok = blockMap["transactions"].([]string); !ok {
-		txs = make([]string, 0)
+	txIs := blockMap["transactions"].([]interface{})
+	beego.Info("txs: ", txIs)
+	if txs, ok = blockMap["transactions"].([]interface{}); !ok {
+		txs = make([]interface{}, 0)
 	}
 
-	if witnesses, ok = blockMap["witnesses"].([]string); !ok {
-		witnesses = make([]string, 0)
+	if witnesses, ok = blockMap["witnesses"].([]interface{}); !ok {
+		witnesses = make([]interface{}, 0)
 	}
 
 	b.TxCount = len(txs)
 
-	beego.Info("Block: ", b)
-	beego.Info("Transactions: ", txs)
-	beego.Info("witnesses: ", witnesses)
+	return b, txs, witnesses
+}
+
+func GetTx(txHash string) *models.Transaction {
+	rpc := common.NewRpc()
+	rpc.Method = common.Rpc_GetTxByHash
+
+	rpc.Params = append(rpc.Params, txHash)
+
+	resp := callRpc(rpc)
+
+	txMap := resp.Result.(map[string]interface{})
+	beego.Info("Transaction: ", txMap)
+
+	rpc.Method = common.Rpc_GetTxReceipt
+
+	resp = callRpc(rpc)
+	receiptMap := resp.Result.(map[string]interface{})
+	beego.Info("Transaction: ", receiptMap)
+
+	tx := &models.Transaction{
+		Hash: txMap["hash"].(string),
+		From: txMap["from"].(string),
+		Value: common.Hex(txMap["value"].(string)).ToString(),
+		GasLimit: common.Hex(txMap["gas"].(string)).ToUint64(),
+		GasPrice: common.Hex(txMap["gasPrice"].(string)).ToString(),
+		GasUsed: common.Hex(receiptMap["gasUsed"].(string)).ToUint64(),
+		Nonce: common.Hex(txMap["nonce"].(string)).ToUint64(),
+		Index: common.Hex(txMap["transactionIndex"].(string)).ToInt(),
+		Input: txMap["input"].(string),
+		BlockNumber: common.Hex(txMap["blockNumber"].(string)).ToString(),
+	}
+
+	var to string
+	var ok bool
+	if to, ok = txMap["to"].(string); !ok {
+		to = ""
+	}
+
+	tx.To = to
+
+	return tx
 }
