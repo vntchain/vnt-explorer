@@ -32,7 +32,11 @@ func main() {
 			beego.Info("txs:", txs)
 			beego.Info("witness:", witnesses)
 
-			block.Insert()
+			err := block.Insert()
+			if err != nil {
+				msg := fmt.Sprintf("Failed to insert transaction: %s", err.Error())
+				panic(msg)
+			}
 
 			for _, txHash := range txs {
 				tx := data.GetTx(fmt.Sprintf("%v", txHash))
