@@ -26,8 +26,6 @@ func init() {
 		beego.Error("failed to register database", err)
 		panic(err.Error())
 	}
-
-	orm.RunSyncdb("default", true, true)
 }
 
 func registerModel() {
