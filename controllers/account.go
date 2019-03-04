@@ -58,7 +58,6 @@ func (this *AccountController) List() {
 
 	isContract, isToken := this.getCond()
 
-	// TODO 这里的排序是字典序，需进行修改
 	order := this.GetString("order")
 	fields := this.getFields()
 

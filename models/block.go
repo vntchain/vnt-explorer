@@ -1,24 +1,24 @@
 package models
 
 import (
-	"github.com/astaxie/beego/orm"
 	"github.com/astaxie/beego"
+	"github.com/astaxie/beego/orm"
 	"strings"
 )
 
 type Block struct {
-	Number       string `orm:"pk"`
-	TimeStamp    uint64
-	TxCount      int
-	Hash         string   `orm:"unique"`
-	ParentHash   string   // FIXME 这里是否需要设置成外键
-	Producer     string  `orm:"index"`
-	Size         string
-	GasUsed      uint64
-	GasLimit     uint64
-	BlockReward  string
-	ExtraData    string
-	Witnesses    []*Node        `orm:"rel(m2m)"`
+	Number      string `orm:"pk"`
+	TimeStamp   uint64
+	TxCount     int
+	Hash        string `orm:"unique"`
+	ParentHash  string
+	Producer    string `orm:"index"`
+	Size        string
+	GasUsed     uint64
+	GasLimit    uint64
+	BlockReward string
+	ExtraData   string
+	Witnesses   []*Node `orm:"rel(m2m)"`
 }
 
 func (b *Block) Insert() error {

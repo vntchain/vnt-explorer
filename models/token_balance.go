@@ -23,7 +23,7 @@ func (t *TokenBalance) Insert() error {
 	return err
 }
 
-func (t *TokenBalance) List(account string, token string, offset, limit int) ([]*TokenBalance, error) {
+func (t *TokenBalance) List(account, token, order string, offset, limit int, fields []string) ([]*TokenBalance, error) {
 	o := orm.NewOrm()
 	qs := o.QueryTable(t)
 	cond := orm.NewCondition()
@@ -33,8 +33,14 @@ func (t *TokenBalance) List(account string, token string, offset, limit int) ([]
 		cond = cond.And("Token", token)
 	}
 	qs = qs.SetCond(cond)
+	if order == "asc" {
+		qs = qs.OrderBy("Balance")
+	} else {
+		qs = qs.OrderBy("-Balance")
+	}
+
 	var tokens []*TokenBalance
-	_, err := qs.Offset(offset).Limit(limit).All(&tokens)
+	_, err := qs.Offset(offset).Limit(limit).All(&tokens, fields...)
 	return tokens, err
 }
 
