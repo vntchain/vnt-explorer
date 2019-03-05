@@ -4,10 +4,12 @@ import (
 	"github.com/astaxie/beego/orm"
 	"github.com/astaxie/beego"
 	"strings"
+	"strconv"
+	"fmt"
 )
 
 type Block struct {
-	Number       string `orm:"pk"`
+	Number       uint64 `orm:"pk"`
 	TimeStamp    uint64
 	TxCount      int
 	Hash         string   `orm:"unique"`
@@ -46,7 +48,11 @@ func (b *Block) Get(nOrh string, fields ...string) (*Block, error) {
 		err = o.Read(b, "Hash")
 	} else {
 		beego.Info("Will read block by number: ", nOrh)
-		b.Number = nOrh
+		b.Number, err = strconv.ParseUint(nOrh, 10, 64)
+		if err != nil {
+			msg := fmt.Sprintf("Wrong block number: %s", nOrh)
+			beego.Error(msg)
+		}
 		err = o.Read(b, "Number")
 	}
 
@@ -56,7 +62,7 @@ func (b *Block) Get(nOrh string, fields ...string) (*Block, error) {
 func (b *Block) Last() (*Block, error) {
 	o := orm.NewOrm()
 
-	qs := o.QueryTable(b).OrderBy("-TimeStamp").Limit(1)
+	qs := o.QueryTable(b).OrderBy("-Number").Limit(1)
 
 	var blocks []*Block
 	_, err := qs.All(&blocks)

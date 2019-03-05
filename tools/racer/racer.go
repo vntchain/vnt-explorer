@@ -8,6 +8,12 @@ import (
 )
 
 func main() {
+
+	//amount := token.GetTotalSupply("0x1b620636c39e68cb700add12a7e53302a3b3f485", "0x3ea7a559e44e8cabc362ca28b6211611467c76f7", 133055)
+	//beego.Info("Amount is: ", amount)
+	//data.Test()
+	//return
+
 	rpcHost := beego.AppConfig.String("node::rpc_host")
 	rpcPort := beego.AppConfig.String("node::rpc_port")
 
@@ -18,9 +24,9 @@ func main() {
 		rmtHgt, localHgt := checkHeight()
 
 		//localHgt = 89
-		//rmtHgt = 20000
+		rmtHgt = 2000
 		beego.Info(fmt.Sprintf("Local height: %d, rmtHeight: %d", localHgt, rmtHgt))
-		if localHgt == rmtHgt {
+		if localHgt >= rmtHgt {
 			time.Sleep(1 * time.Second)
 			continue
 		}
@@ -40,6 +46,7 @@ func main() {
 
 			for _, txHash := range txs {
 				tx := data.GetTx(fmt.Sprintf("%v", txHash))
+				tx.TimeStamp = block.TimeStamp
 				beego.Info("Got transaction: ", tx)
 				err := tx.Insert()
 				if err != nil {
@@ -48,7 +55,7 @@ func main() {
 				}
 			}
 
-			localHgt = localHgt + 1
+			//localHgt = localHgt + 1
 		}
 		//break
 	}

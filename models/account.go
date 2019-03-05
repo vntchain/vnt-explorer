@@ -22,13 +22,19 @@ type Account struct {
 	TokenLogo      string
 	TokenAmount    string
 	TokenAcctCount string
-	FirstBlock     string
-	LastBlock      string
+	FirstBlock     uint64
+	LastBlock      uint64
 }
 
 func (a *Account) Insert() error {
 	o := orm.NewOrm()
 	_, err := o.Insert(a)
+	return err
+}
+
+func (a *Account) Update() error {
+	o := orm.NewOrm()
+	_, err := o.Update(a)
 	return err
 }
 

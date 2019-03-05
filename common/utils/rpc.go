@@ -1,4 +1,4 @@
-package data
+package utils
 
 import (
 	"github.com/vntchain/vnt-explorer/common"
@@ -14,7 +14,7 @@ var rpcHost = beego.AppConfig.String("node::rpc_host")
 var rpcPort = beego.AppConfig.String("node::rpc_port")
 var rpcApi = fmt.Sprintf("http://%s:%s/", rpcHost, rpcPort)
 
-func callRpc(rpc *common.Rpc) *common.Response {
+func CallRpc(rpc *common.Rpc) *common.Response {
 	rpcJson, err := json.Marshal(rpc)
 
 	buf := bytes.NewBuffer(rpcJson)

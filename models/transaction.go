@@ -6,21 +6,23 @@ import (
 )
 
 type Transaction struct {
-	Hash        string `orm:"pk"`
-	TimeStamp   int64
-	From        string `orm:"index"`
-	To          string `orm:"index"`
-	Value       string
-	GasLimit    uint64
-	GasPrice    string
-	GasUsed     uint64
-	Nonce       uint64
-	Index       int
-	Input       string	`orm:"type(text)"`
-	IsToken     bool
-	TokenTo     string `orm:"index"`
-	TokenAmount string
-	BlockNumber string `orm:"index"`
+	Hash        	string `orm:"pk"`
+	TimeStamp   	uint64
+	From        	string `orm:"index"`
+	To          	string `orm:"index"`
+	Value       	string
+	GasLimit    	uint64
+	GasPrice    	string
+	GasUsed     	uint64
+	Nonce       	uint64
+	Index       	int
+	Input       	string	`orm:"type(text)"`
+	Status			int
+	ContractAddr	string // when transaction is a contract creation
+	IsToken     	bool
+	TokenTo     	string `orm:"index"`
+	TokenAmount 	string
+ 	BlockNumber 	uint64 `orm:"index"`
 }
 
 func makeCond(block string, account string, isToken int) *orm.Condition {

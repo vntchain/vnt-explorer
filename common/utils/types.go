@@ -1,7 +1,6 @@
-package common
+package utils
 
 import (
-	"github.com/vntchain/vnt-explorer/common/utils"
 	"fmt"
 	"github.com/astaxie/beego"
 )
@@ -10,7 +9,7 @@ type Hex string
 
 func (hex Hex) ToUint64() uint64 {
 	beego.Info("Will convert hex", hex)
-	r,e := utils.DecodeUint64(string(hex))
+	r,e := DecodeUint64(string(hex))
 
 	if e != nil {
 		msg := fmt.Sprintf("Failed to decode hex to uint64: %s", e.Error())
@@ -22,7 +21,13 @@ func (hex Hex) ToUint64() uint64 {
 }
 
 func (hex Hex) ToString() string {
-	b,e := utils.DecodeBig(string(hex))
+
+	hex = hex[2:]
+	for string(hex[0]) == "0" {
+		hex = hex[1:]
+	}
+
+	b,e := DecodeBig("0x" + string(hex))
 	if e != nil {
 		msg := fmt.Sprintf("Failed to decode hex to big: %s", e.Error())
 		beego.Error(msg)
@@ -37,7 +42,7 @@ func (hex Hex) ToInt() int {
 }
 
 func (hex Hex) ToInt64() int64 {
-	b,e := utils.DecodeBig(string(hex))
+	b,e := DecodeBig(string(hex))
 	if e != nil {
 		msg := fmt.Sprintf("Failed to decode hex to big: %s", e.Error())
 		beego.Error(msg)
