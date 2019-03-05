@@ -31,13 +31,7 @@ func alterTable() {
 	needAlterMap["token_balance"] = []string{"balance"}
 	for tableName, columns := range needAlterMap {
 		for _, col := range columns {
-			var err error
-			if tableName == "block" && col == "number" {
-				err = alterColumn(tableName, col, "decimal(64,0) PRIMARY KEY")
-			} else {
-				err = alterColumn(tableName, col, "decimal(64,0)")
-			}
-			if err != nil {
+			if err := alterColumn(tableName, col, "decimal(64,0)"); err != nil {
 				fmt.Println(err)
 			}
 		}
@@ -46,17 +40,11 @@ func alterTable() {
 }
 
 func alterColumn(tableName, column, dataType string) error {
-	// TODO 直接ALTER COLUMN会报错，待查证
 	o := orm.NewOrm()
-	alterString := fmt.Sprintf("ALTER TABLE %s DROP COLUMN %s", tableName, column)
+	alterString := fmt.Sprintf("ALTER TABLE %s MODIFY %s %s", tableName, column, dataType)
 	_, err := o.Raw(alterString).Exec()
 	if err != nil {
-		return fmt.Errorf("ALTER TABLE %s DROP COLUMN error: ", tableName, err)
-	}
-	alterString = fmt.Sprintf("ALTER TABLE %s ADD %s %s", tableName, column, dataType)
-	_, err = o.Raw(alterString).Exec()
-	if err != nil {
-		return fmt.Errorf("ALTER TABLE %s ADD  error: ", tableName, err)
+		return fmt.Errorf("ALTER TABLE %s error: ", tableName, err)
 	}
 	return nil
 }
