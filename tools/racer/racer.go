@@ -2,9 +2,11 @@ package main
 
 import (
 	"fmt"
+	"strconv"
+	"time"
+
 	"github.com/astaxie/beego"
 	"github.com/vntchain/vnt-explorer/tools/racer/data"
-	"time"
 )
 
 func main() {
@@ -31,7 +33,7 @@ func main() {
 	for {
 		rmtHgt, localHgt := checkHeight()
 
-		//localHgt = 89
+		// localHgt = 14
 		beego.Info(fmt.Sprintf("Local height: %d, rmtHeight: %d", localHgt, rmtHgt))
 		if localHgt >= rmtHgt {
 			time.Sleep(1 * time.Second)
@@ -53,11 +55,7 @@ func main() {
 			beego.Info("txs:", txs)
 			beego.Info("witness:", witnesses)
 
-			err := block.Insert()
-			if err != nil {
-				msg := fmt.Sprintf("Failed to insert transaction: %s", err.Error())
-				panic(msg)
-			}
+			var dynamicReward float64
 
 			for _, txHash := range txs {
 				tx := data.GetTx(fmt.Sprintf("%v", txHash))
@@ -71,6 +69,34 @@ func main() {
 
 				beego.Info("Will extract accounts from transaction: ", txHash)
 				data.ExtractAcct(tx)
+
+				tmp, err := strconv.Atoi(tx.GasPrice)
+				if err != nil {
+					msg := fmt.Sprintf("Failed to convert gasPrice: %s", err.Error())
+					panic(msg)
+				}
+				dynamicReward += float64(tx.GasUsed) * (float64(tmp) / 1e18)
+				// beego.Info("---------> tx.GasUsed == ", tx.GasUsed, "tx.GasPrice ==", tx.GasPrice)
+			}
+
+			// compute blockReward
+			// 区块奖励，0-47304000都是6个vnt，47304001-94608000是3个，再之后是1.5个
+			var staticReward float64
+			if block.Number >= 0 && block.Number <= 47304000 {
+				staticReward = 6
+			} else if block.Number >= 47304001 && block.Number <= 94608000 {
+				staticReward = 3
+			} else if block.Number >= 94608001 {
+				staticReward = 1.5
+			}
+
+			result := staticReward + dynamicReward
+			block.BlockReward = fmt.Sprintf("%f VNT (%f + %f)", result, staticReward, dynamicReward)
+			// beego.Info("---------> block.BlockReward == ", block.BlockReward)
+			err := block.Insert()
+			if err != nil {
+				msg := fmt.Sprintf("Failed to insert transaction: %s", err.Error())
+				panic(msg)
 			}
 
 			localHgt = localHgt + 1
