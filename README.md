@@ -17,6 +17,7 @@ go get github.com/astaxie/beego
 go get github.com/beego/bee
 go get github.com/go-sql-driver/mysql
 go get github.com/bluele/gcache
+go get github.com/vntchain/go-vnt
 ```
 
 ## 运行

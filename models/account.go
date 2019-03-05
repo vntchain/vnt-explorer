@@ -12,8 +12,8 @@ type Account struct {
 	IsContract     bool
 	ContractName   string
 	ContractOwner  string `orm:"index"`
-	Code           string
-	Abi            string
+	Code           string `orm:"type(text)"`
+	Abi            string `orm:"type(text)"`
 	Home           string
 	InitTx         string
 	IsToken        bool

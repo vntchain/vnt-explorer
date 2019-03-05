@@ -32,7 +32,6 @@ func main() {
 		rmtHgt, localHgt := checkHeight()
 
 		//localHgt = 89
-		rmtHgt = 2000
 		beego.Info(fmt.Sprintf("Local height: %d, rmtHeight: %d", localHgt, rmtHgt))
 		if localHgt >= rmtHgt {
 			time.Sleep(1 * time.Second)
@@ -61,6 +60,9 @@ func main() {
 					msg := fmt.Sprintf("Failed to insert transaction: %s", err.Error())
 					panic(msg)
 				}
+
+				beego.Info("Will extract accounts from transaction: ", txHash)
+				data.ExtractAcct(tx)
 			}
 
 			localHgt = localHgt + 1

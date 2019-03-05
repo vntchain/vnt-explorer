@@ -156,7 +156,7 @@ func GetTx(txHash string) *models.Transaction {
 		Nonce: utils.Hex(txMap["nonce"].(string)).ToUint64(),
 		Index: utils.Hex(txMap["transactionIndex"].(string)).ToInt(),
 		Input: txMap["input"].(string),
-		Status:utils.Hex(txMap["transactionIndex"].(string)).ToInt(),
+		Status:utils.Hex(receiptMap["status"].(string)).ToInt(),
 		BlockNumber: utils.Hex(txMap["blockNumber"].(string)).ToUint64(),
 	}
 
@@ -178,11 +178,29 @@ func GetTx(txHash string) *models.Transaction {
 
 // Extract Account from a transaction
 func ExtractAcct(tx *models.Transaction) {
+	if tx.Status == 0 {
+		return
+	}
 	from := tx.From
 	to := tx.To
 	contractAddr := tx.ContractAddr
 
-	beego.Info(from, to, contractAddr)
+	if GetAccount(from) == nil {
+		beego.Info("Block:", tx.BlockNumber, ", will insert normal account:", from)
+		NewAccount(from, tx, ACC_TYPE_NORMAL)
+	}
+
+	if to != "" && GetAccount(to) == nil {
+		beego.Info("Block:", tx.BlockNumber, ", will insert normal account:", to)
+		NewAccount(to, tx, ACC_TYPE_NORMAL)
+	}
+
+	if contractAddr != "" && GetAccount(contractAddr) == nil {
+		beego.Info("Block:", tx.BlockNumber, ", will insert contract account:", contractAddr)
+		NewAccount(contractAddr, tx, ACC_TYPE_CONTRACT)
+	}
+
+	//beego.Info(from, to, contractAddr)
 }
 
 func GetBalance(addr string, blockNumber uint64) string {
@@ -227,10 +245,13 @@ func IsToken(addr string, tx *models.Transaction) (bool, *token.Erc20) {
 func NewAccount(addr string, tx *models.Transaction, _type int) {
 	a := &models.Account {
 		Address: addr,
-		Vname: "",
+		Vname: addr, //todo: get vname
+		Balance: "0",
 		TxCount: 1,
 		FirstBlock: tx.BlockNumber,
 		LastBlock: tx.BlockNumber,
+		TokenAmount: "0",
+		TokenAcctCount: "0",
 	}
 
 	if _type == ACC_TYPE_CONTRACT {
@@ -321,15 +342,18 @@ func PersistNormalAcct(addr string, a *models.Account, tx *models.Transaction) {
 
 
 func GetAccount(addr string) *models.Account {
-	if _type, err := acctCache.Get(addr); err != nil {
+	if _type, err := acctCache.Get(addr); err != nil && _type != nil {
+		beego.Info("Address hit in cache:", addr)
 		return _type.(*models.Account)
 	} else {
+		beego.Info("Address not hit in cache:", addr)
 		a := &models.Account{}
 		a, err := a.Get(addr)
 		if err != nil {
+			beego.Info("Address not hit in db:", addr)
 			return nil
 		}
-
+		beego.Info("Address hit in db:", addr)
 		acctCache.Set(addr, a)
 		return a
 	}
