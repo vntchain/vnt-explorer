@@ -21,12 +21,13 @@ func (hex Hex) ToUint64() uint64 {
 }
 
 func (hex Hex) ToString() string {
-
 	hex = hex[2:]
-	for string(hex[0]) == "0" {
-		hex = hex[1:]
+	if hex != "0" {
+		for string(hex[0]) == "0" {
+			hex = hex[1:]
+		}
 	}
-
+	
 	b,e := DecodeBig("0x" + string(hex))
 	if e != nil {
 		msg := fmt.Sprintf("Failed to decode hex to big: %s", e.Error())
