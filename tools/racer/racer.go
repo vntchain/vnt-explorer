@@ -11,7 +11,6 @@ func main() {
 
 	//amount := token.GetTotalSupply("0x1b620636c39e68cb700add12a7e53302a3b3f485", "0x3ea7a559e44e8cabc362ca28b6211611467c76f7", 133055)
 	//beego.Info("Amount is: ", amount)
-	//data.Test()
 	//return
 
 	rpcHost := beego.AppConfig.String("node::rpc_host")
@@ -55,7 +54,7 @@ func main() {
 				}
 			}
 
-			//localHgt = localHgt + 1
+			localHgt = localHgt + 1
 		}
 		//break
 	}
