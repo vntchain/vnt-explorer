@@ -42,9 +42,11 @@ func (this *TokenBalanceController) ListByToken() {
 		beego.Warn("Failed to read limit: ", err.Error())
 		limit = common.DefaultPageSize
 	}
+	order := this.GetString("order")
+	fields := this.getFields()
 
 	tokenBalance := &models.TokenBalance{}
-	dbItemList, err := tokenBalance.List("", tokenAddress, offset, limit)
+	dbItemList, err := tokenBalance.List("", tokenAddress, order, offset, limit, fields)
 	if err != nil {
 		this.ReturnErrorMsg("Failed to list TokenBalance: %s", err.Error())
 	} else {
@@ -67,9 +69,11 @@ func (this *TokenBalanceController) ListByAccount() {
 		beego.Warn("Failed to read limit: ", err.Error())
 		limit = common.DefaultPageSize
 	}
+	order := this.GetString("order")
+	fields := this.getFields()
 
 	tokenBalance := &models.TokenBalance{}
-	dbItemList, err := tokenBalance.List(account, "", offset, limit)
+	dbItemList, err := tokenBalance.List(account, "", order, offset, limit, fields)
 	if err != nil {
 		this.ReturnErrorMsg("Failed to list TokenBalance: %s", err.Error())
 	} else {

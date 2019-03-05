@@ -1,8 +1,8 @@
 package models
 
 import (
-	"github.com/astaxie/beego/orm"
 	"github.com/astaxie/beego"
+	"github.com/astaxie/beego/orm"
 	"strings"
 	"strconv"
 	"fmt"
@@ -13,7 +13,7 @@ type Block struct {
 	TimeStamp    uint64
 	TxCount      int
 	Hash         string   `orm:"unique"`
-	ParentHash   string   // FIXME 这里是否需要设置成外键
+	ParentHash   string
 	Producer     string  `orm:"index"`
 	Size         string
 	GasUsed      uint64
