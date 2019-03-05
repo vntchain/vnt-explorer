@@ -1,10 +1,10 @@
 package main
 
 import (
-	"github.com/astaxie/beego"
 	"fmt"
-	"time"
+	"github.com/astaxie/beego"
 	"github.com/vntchain/vnt-explorer/tools/racer/data"
+	"time"
 )
 
 func main() {
@@ -36,10 +36,18 @@ func main() {
 		if localHgt >= rmtHgt {
 			time.Sleep(1 * time.Second)
 			continue
+		} else {
+			nodes := data.GetNodes()
+			for _, node := range nodes {
+				if err := node.Insert(); err != nil {
+					msg := fmt.Sprintf("Failed to insert node: %s", err.Error())
+					panic(msg)
+				}
+			}
 		}
 
 		for localHgt < rmtHgt {
-			block, txs, witnesses := data.GetBlock(localHgt+1)
+			block, txs, witnesses := data.GetBlock(localHgt + 1)
 
 			beego.Info("Block:", block)
 			beego.Info("txs:", txs)
@@ -83,6 +91,3 @@ func checkHeight() (int64, int64) {
 
 	return rmtHgt, localHgt
 }
-
-
-

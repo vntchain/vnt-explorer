@@ -17,7 +17,7 @@ type Node struct {
 
 func (n *Node) Insert() error {
 	o := orm.NewOrm()
-	_, err := o.Insert(n)
+	_, err := o.InsertOrUpdate(n)
 	return err
 }
 
