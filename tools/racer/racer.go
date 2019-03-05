@@ -9,8 +9,17 @@ import (
 
 func main() {
 
-	//amount := token.GetTotalSupply("0x1b620636c39e68cb700add12a7e53302a3b3f485", "0x3ea7a559e44e8cabc362ca28b6211611467c76f7", 133055)
+	//amount := token.GetMount("0x2b437e35b08ce2d995922f0f07dd67e94ab85b88", "0x122369f04f32269598789998de33e3d56e2c507a", 4201)
 	//beego.Info("Amount is: ", amount)
+	//supply := token.GetTotalSupply("0x2b437e35b08ce2d995922f0f07dd67e94ab85b88", 4201)
+	//beego.Info("supply is: ", supply)
+	//dec := token.GetDecimals("0x2b437e35b08ce2d995922f0f07dd67e94ab85b88", 4201)
+	//beego.Info("dec is: ", dec)
+	//symbol := token.GetSymbol("0x2b437e35b08ce2d995922f0f07dd67e94ab85b88", 4201)
+	//beego.Info("symbol is: ", symbol)
+	//tokenName := token.GetTokenName("0x2b437e35b08ce2d995922f0f07dd67e94ab85b88", 4201)
+	//beego.Info("tokenName is: ", tokenName)
+	//
 	//return
 
 	rpcHost := beego.AppConfig.String("node::rpc_host")

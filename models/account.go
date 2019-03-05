@@ -21,6 +21,7 @@ type Account struct {
 	TokenSymbol    string
 	TokenLogo      string
 	TokenAmount    string
+	TokenDecimals  uint64
 	TokenAcctCount string
 	FirstBlock     uint64
 	LastBlock      uint64

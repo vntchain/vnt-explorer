@@ -22,6 +22,18 @@ var abiPath = "./tools/racer/token/erc20.json"
 
 var Abi = readAbi(abiPath)
 
+const (
+	TOKEN_ERC20 = 0
+)
+
+type Erc20 struct {
+	Address 		string
+	TokenName		string
+	TotalSupply		*big.Int
+	Symbol			string
+	Decimals		*big.Int
+}
+
 func readAbi(abiPath string) abi.ABI {
 	beego.Info("Will read abi:", abiPath)
 	abiData, err := ioutil.ReadFile(abiPath)
@@ -113,36 +125,98 @@ func GetMount(token, addr string, blockNumber uint64) string {
 	data, err := Abi.Pack("GetAmount", vntCommon.HexToAddress(addr))
 
 	if err != nil {
-		msg := fmt.Sprintf("Failed to pack input of method: GetMounterror: %s", err.Error())
+		msg := fmt.Sprintf("Failed to pack input of method: GetAmount: %s", err.Error())
 		beego.Error()
 		panic(msg)
 	}
 
 	resp := call(token, blockNumber, data)
 
-	amount := utils.Hex(resp.Result.(string)).ToString()
-	return amount
-}
-
-func GetTotalSupply(token, addr string, blockNumber uint64) string {
-	data, err := Abi.Pack("GetAmount", vntCommon.HexToAddress(addr))
-
-	if err != nil {
-		msg := fmt.Sprintf("Failed to pack input of method: GetMounterror: %s", err.Error())
-		beego.Error()
-		panic(msg)
-	}
-
-	resp := call(token, blockNumber, data)
-
-	type Out struct {
-		Out big.Int
-	}
-	var _out big.Int
+	var _out *big.Int
 
 	outData, _ := utils.Decode(resp.Result.(string))
 	beego.Info(outData)
 	err = Abi.Unpack(&_out, "GetAmount",  outData)
 
 	return _out.String()
+}
+
+func GetTotalSupply(token string, blockNumber uint64) *big.Int {
+	data, err := Abi.Pack("GetTotalSupply")
+
+	if err != nil {
+		msg := fmt.Sprintf("Failed to pack input of method: GetTotalSupply: %s", err.Error())
+		beego.Error()
+		panic(msg)
+	}
+
+	resp := call(token, blockNumber, data)
+
+	var _out *big.Int
+
+	outData, _ := utils.Decode(resp.Result.(string))
+	beego.Info(outData)
+	err = Abi.Unpack(&_out, "GetTotalSupply",  outData)
+
+	return _out
+}
+
+func GetDecimals(token string, blockNumber uint64) *big.Int {
+	data, err := Abi.Pack("GetDecimals")
+
+	if err != nil {
+		msg := fmt.Sprintf("Failed to pack input of method: GetDecimals: %s", err.Error())
+		beego.Error()
+		panic(msg)
+	}
+
+	resp := call(token, blockNumber, data)
+
+	var _out *big.Int
+
+	outData, _ := utils.Decode(resp.Result.(string))
+	beego.Info(outData)
+	err = Abi.Unpack(&_out, "GetDecimals",  outData)
+
+	return _out
+}
+
+func GetSymbol(token string, blockNumber uint64) string {
+	data, err := Abi.Pack("GetSymbol")
+
+	if err != nil {
+		msg := fmt.Sprintf("Failed to pack input of method: GetSymbol: %s", err.Error())
+		beego.Error()
+		panic(msg)
+	}
+
+	resp := call(token, blockNumber, data)
+
+	var _out string
+
+	outData, _ := utils.Decode(resp.Result.(string))
+	beego.Info(outData)
+	err = Abi.Unpack(&_out, "GetSymbol",  outData)
+
+	return _out
+}
+
+func GetTokenName(token string, blockNumber uint64) string {
+	data, err := Abi.Pack("GetTokenName")
+
+	if err != nil {
+		msg := fmt.Sprintf("Failed to pack input of method: GetTokenName: %s", err.Error())
+		beego.Error()
+		panic(msg)
+	}
+
+	resp := call(token, blockNumber, data)
+
+	var _out string
+
+	outData, _ := utils.Decode(resp.Result.(string))
+	beego.Info(outData)
+	err = Abi.Unpack(&_out, "GetTokenName",  outData)
+
+	return _out
 }

@@ -9,6 +9,7 @@ import (
 	"strings"
 	"github.com/vntchain/vnt-explorer/common/utils"
 	"github.com/bluele/gcache"
+	"github.com/vntchain/vnt-explorer/tools/racer/token"
 )
 
 var acctCache = gcache.New(10000).LRU().Build()
@@ -164,6 +165,7 @@ func GetTx(txHash string) *models.Transaction {
 	if to, ok = txMap["to"].(string); !ok {
 		to = ""
 
+		beego.Info("This is a transaction of contract creation.")
 		if contractAddr, ok := receiptMap["contractAddress"].(string); ok {
 			tx.ContractAddr = contractAddr
 		}
@@ -200,8 +202,25 @@ func PersistUnknownAcct(addr string, a *models.Account, tx *models.Transaction) 
 
 }
 
-func IsToken(addr string) bool {
-	return false
+func IsToken(addr string, tx *models.Transaction) (bool, *token.Erc20) {
+	totalSupply := token.GetTotalSupply(addr, tx.BlockNumber)
+	tokenName := token.GetTokenName(addr, tx.BlockNumber)
+	decimals := token.GetDecimals(addr, tx.BlockNumber)
+	symbol := token.GetSymbol(addr, tx.BlockNumber)
+
+	if totalSupply != nil && decimals != nil && symbol != "" && tokenName != "" {
+		erc20 := &token.Erc20{
+			Address: addr,
+			TokenName: tokenName,
+			TotalSupply: totalSupply,
+			Symbol: symbol,
+			Decimals: decimals,
+		}
+
+		return true, erc20
+	}
+
+	return false, nil
 }
 
 // Insert a new Account, in this case, tye _type only could be "normal" or "contract"
@@ -220,15 +239,17 @@ func NewAccount(addr string, tx *models.Transaction, _type int) {
 		a.ContractOwner = tx.From
 		a.InitTx = tx.Hash
 
-		if IsToken(addr) {
+		if ok, erc20 := IsToken(addr, tx); ok {
 			a.IsToken = true
 
 			// TODO: get token detail by calling the contract
-			a.TokenType = 0
+			a.TokenType = token.TOKEN_ERC20
+			a.ContractName = erc20.TokenName
+			a.TokenAmount = erc20.TotalSupply.String()
+			a.TokenSymbol = erc20.Symbol
+			a.TokenDecimals = erc20.Decimals.Uint64()
 			a.TokenAcctCount = "1"
-			a.TokenAmount = "10000000000000"
 			a.TokenLogo = ""
-			a.TokenSymbol = "vnt"
 		}
 	}
 

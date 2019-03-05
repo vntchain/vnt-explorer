@@ -27,7 +27,7 @@ func (hex Hex) ToString() string {
 			hex = hex[1:]
 		}
 	}
-	
+
 	b,e := DecodeBig("0x" + string(hex))
 	if e != nil {
 		msg := fmt.Sprintf("Failed to decode hex to big: %s", e.Error())
