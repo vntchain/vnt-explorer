@@ -217,6 +217,15 @@ func ExtractAcct(tx *models.Transaction) (retAddrs []string) {
 			if a.IsToken {
 				beego.Info("Block:", tx.BlockNumber, ", will update token account:", to)
 				retAddrs = UpdateAccount(a, tx, ACC_TYPE_TOKEN)
+
+				// Update the tx
+				tx.IsToken = true
+				err := tx.Update()
+				if err != nil {
+					msg := fmt.Sprintf("Failed to update transaction: %s, error: %s", tx.Hash, err.Error())
+					beego.Error(msg)
+					panic(msg)
+				}
 			} else if a.IsContract {
 				beego.Info("Block:", tx.BlockNumber, ", will update contract account:", to)
 				retAddrs = UpdateAccount(a, tx, ACC_TYPE_CONTRACT)
@@ -280,7 +289,7 @@ func IsToken(addr string, tx *models.Transaction) (bool, *token.Erc20) {
 			beego.Error(msg)
 			panic(msg)
 		}
-		
+
 		return true, erc20
 	}
 
