@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"github.com/vntchain/vnt-explorer/common"
 	"github.com/vntchain/vnt-explorer/common/utils"
+	"github.com/astaxie/beego/orm"
 )
 
 var transferSig = map[string]string {
@@ -60,48 +61,92 @@ func IsTransfer(tx *models.Transaction) bool {
 	return false
 }
 
+func UpdateTokenBalance(token *models.Account, tx *models.Transaction) []string {
+	if IsTransfer(tx) {
+		beego.Info("This is a token transfer transaction:", tx.Hash)
+		addrs := GetTransferAddrs(tx)
+		for _, addr := range addrs {
+			tokenBalance := &models.TokenBalance{}
+			tokenBalance, err := tokenBalance.GetByAddr(addr, token.Address)
+			if err != nil && err == orm.ErrNoRows {
+				tokenBalance.Balance = GetAmount(token.Address, addr, tx.BlockNumber)
+				 if err = tokenBalance.Insert(); err != nil {
+				 	msg := fmt.Sprintf("Failed to insert token balance, token:%s, address:%s, balance:%s",
+				 		tokenBalance.Token, tokenBalance.Account, tokenBalance.Balance)
+				 	beego.Error(msg)
+				 	panic(msg)
+				 }
+
+				 beego.Info("Success to insert token balance:", tokenBalance.Token, tokenBalance.Account, tokenBalance.Balance)
+			} else if err != nil {
+				msg := fmt.Sprintf("Failed to get token balance, token:%s, address:%s",
+					tokenBalance.Token, tokenBalance.Account)
+				beego.Error(msg)
+				panic(msg)
+			} else if tokenBalance.Id > 0 {
+				tokenBalance.Balance = GetAmount(token.Address, addr, tx.BlockNumber)
+				if err := tokenBalance.Update(); err != nil {
+					msg := fmt.Sprintf("Failed to update token balance, token:%s, address:%s, token:%s",
+						tokenBalance.Token, tokenBalance.Account, tokenBalance.Account)
+					beego.Error(msg)
+					panic(msg)
+				}
+				beego.Info("Success to update token balance:", tokenBalance.Token, tokenBalance.Account, tokenBalance.Balance)
+			}
+		}
+		return addrs[1:]
+	}
+	return nil
+}
+
 func GetTransferAddrs(tx *models.Transaction) (addrs []string) {
 
 	input := tx.Input
 	sig := input[0:10]
 
-	input = input[10:]
+	//input = input[10:]
+	data, err := utils.Decode(input)
+	if err != nil {
+		msg := fmt.Sprintf("Failed to decode transfer input: %s, error: %s", input, err.Error())
+		beego.Error(msg)
+		panic(msg)
+	}
+	data = data[4:]
 	switch transferSig[sig] {
 	case "transfer":
 		type Input struct {
 			To 		vntCommon.Address
-			value 	big.Int
+			value 	*big.Int
 		}
 
 		var _input Input
-		err := Abi.UnpackInput(&_input, "transfer", []byte(input))
+
+		err = Abi.UnpackInput(&_input, "transfer", data)
 
 		if err != nil {
-			msg := fmt.Sprintf("Failed to unpack input of method: transfer, input: %s, error: %s", input, err.Error())
+			msg := fmt.Sprintf("Failed to unpack input of method: transfer, input: %s, error: %s", data, err.Error())
 			beego.Error()
 			panic(msg)
 		}
 
-		addrs = append(addrs, tx.From)
-
-		addrs = append(addrs, _input.To.String())
+		addrs = append(addrs, tx.From, _input.To.String())
 		break
 	case "transferFrom":
 		type Input struct {
 			From	vntCommon.Address
 			To 		vntCommon.Address
-			value 	big.Int
+			value 	*big.Int
 		}
 
 		var _input Input
-		err := Abi.UnpackInput(&_input, "transferFrom", []byte(input))
+		err := Abi.UnpackInput(&_input, "transferFrom", data)
 		if err != nil {
-			msg := fmt.Sprintf("Failed to unpack input of method: transferFrom, input: %s, error: %s", input, err.Error())
+			msg := fmt.Sprintf("Failed to unpack input of method: transferFrom, input: %s, error: %s", data, err.Error())
 			beego.Error()
 			panic(msg)
 		}
 
-		addrs = append(addrs, _input.From.String(), _input.To.String())
+		addrs = append(addrs, tx.From, _input.From.String(), _input.To.String())
 	}
 
 	return
@@ -124,7 +169,7 @@ func call(token string, blockNumber uint64, data []byte) *common.Response {
 	return resp
 }
 
-func GetMount(token, addr string, blockNumber uint64) string {
+func GetAmount(token, addr string, blockNumber uint64) string {
 	data, err := Abi.Pack("GetAmount", vntCommon.HexToAddress(addr))
 
 	if err != nil {

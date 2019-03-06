@@ -23,6 +23,12 @@ func (t *TokenBalance) Insert() error {
 	return err
 }
 
+func (t *TokenBalance) Update() error {
+	o := orm.NewOrm()
+	_, err := o.Update(t)
+	return err
+}
+
 func (t *TokenBalance) List(account, token, order string, offset, limit int, fields []string) ([]*TokenBalance, error) {
 	o := orm.NewOrm()
 	qs := o.QueryTable(t)

@@ -192,7 +192,8 @@ func GetTx(txHash string) *models.Transaction {
 }
 
 // Extract Account from a transaction
-func ExtractAcct(tx *models.Transaction) {
+func ExtractAcct(tx *models.Transaction) (retAddrs []string) {
+
 	if tx.Status == 0 {
 		return
 	}
@@ -205,7 +206,7 @@ func ExtractAcct(tx *models.Transaction) {
 		NewAccount(from, tx, ACC_TYPE_NORMAL)
 	} else {
 		beego.Info("Block:", tx.BlockNumber, ", will update normal account:", from)
-		UpdateAccount(a, tx, ACC_TYPE_NORMAL)
+		retAddrs = UpdateAccount(a, tx, ACC_TYPE_NORMAL)
 	}
 
 	if to != "" {
@@ -215,25 +216,29 @@ func ExtractAcct(tx *models.Transaction) {
 		} else {
 			if a.IsToken {
 				beego.Info("Block:", tx.BlockNumber, ", will update token account:", to)
-				UpdateAccount(a, tx, ACC_TYPE_NORMAL)
+				retAddrs = UpdateAccount(a, tx, ACC_TYPE_TOKEN)
 			} else if a.IsContract {
 				beego.Info("Block:", tx.BlockNumber, ", will update contract account:", to)
-				UpdateAccount(a, tx, ACC_TYPE_CONTRACT)
+				retAddrs = UpdateAccount(a, tx, ACC_TYPE_CONTRACT)
 			} else {
 				beego.Info("Block:", tx.BlockNumber, ", will update normal account:", from)
-				UpdateAccount(a, tx, ACC_TYPE_NORMAL)
+				retAddrs = UpdateAccount(a, tx, ACC_TYPE_NORMAL)
 			}
 		}
-	} else if contractAddr != "" {
+	} else if contractAddr != "" {  // this case is for contract creation
 		if a := GetAccount(contractAddr); a == nil {
+			// new contract account
 			beego.Info("Block:", tx.BlockNumber, ", will insert contract account:", contractAddr)
 			NewAccount(contractAddr, tx, ACC_TYPE_CONTRACT)
 		} else if !a.IsContract {
-			a.IsContract = true
+			// this account already exists as a normal account,
+			// will change it to a contract account
+			//a.IsContract = true
 			beego.Info("Block:", tx.BlockNumber, ", will update contract account:", contractAddr)
-			UpdateAccount(a, tx, ACC_TYPE_CONTRACT)
+			retAddrs = UpdateAccount(a, tx, ACC_TYPE_CONTRACT)
 		}
 	}
+	return
 }
 
 func GetBalance(addr string, blockNumber uint64) string {
@@ -319,15 +324,64 @@ func NewAccount(addr string, tx *models.Transaction, _type int) {
 	acctCache.Set(addr, a)
 }
 
-func UpdateAccount(account *models.Account, tx *models.Transaction, _type int) {
-	if _type == ACC_TYPE_TOKEN {
-		input := utils.MustDecode(tx.Input)
-		beego.Info(input)
+func UpdateAccount(account *models.Account, tx *models.Transaction, _type int) (retAddrs []string) {
+
+	account.Balance = GetBalance(account.Address, tx.BlockNumber)
+	account.LastBlock = tx.BlockNumber
+
+	if _type == ACC_TYPE_CONTRACT {
+		// if already exists as a normal account,
+		// then now it turns out a new contract account
+		if !account.IsContract {
+			if ok, erc20 := IsToken(account.Address, tx); ok {
+				account.IsToken = true
+				account.TokenType = token.TOKEN_ERC20
+				account.ContractName = erc20.TokenName
+				account.TokenAmount = erc20.TotalSupply.String()
+				account.TokenSymbol = erc20.Symbol
+				account.TokenDecimals = erc20.Decimals.Uint64()
+				account.TokenAcctCount = "0"
+				account.TokenLogo = ""
+			}
+		}
+		account.IsContract = true
+	} else if _type == ACC_TYPE_TOKEN {
+		retAddrs = token.UpdateTokenBalance(account, tx)
+	}
+
+	err := account.Update()
+	if err != nil {
+		msg := fmt.Sprintf("Failed to update account: %s", err.Error())
+		beego.Error(msg)
+		panic(msg)
+	}
+	acctCache.Set(account.Address, account)
+	return
+}
+
+func PersistUnknownAccounts(accts []string, blockNumber uint64) {
+	beego.Info("Will persist unknown accounts: ", accts)
+	for _, a := range accts {
+		if acct := GetAccount(a); acct != nil {
+			acct.Balance = GetBalance(a, blockNumber)
+			acct.LastBlock = blockNumber
+			err := acct.Update()
+			if err != nil {
+				msg := fmt.Sprintf("Failed to update account: %s, error: %s", a, err.Error())
+				beego.Error(msg)
+				panic(err)
+			}
+			beego.Info("Updated unknown accounts: ", a)
+			acctCache.Set(a, acct)
+		} else {
+			NewAccount(a, &models.Transaction{BlockNumber:blockNumber}, ACC_TYPE_NORMAL)
+			beego.Info("Inserted unknown accounts: ", a)
+		}
 	}
 }
 
 func GetAccount(addr string) *models.Account {
-	if _type, err := acctCache.Get(addr); err != nil && _type != nil {
+	if _type, err := acctCache.Get(addr); err == nil && _type != nil {
 		beego.Info("Address hit in cache:", addr)
 		return _type.(*models.Account)
 	} else {
