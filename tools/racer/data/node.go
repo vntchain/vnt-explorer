@@ -13,7 +13,11 @@ func GetNodes() []*models.Node {
 	rpc := common.NewRpc()
 	rpc.Method = common.Rpc_GetAllCandidates
 
-	resp := utils.CallRpc(rpc)
+	err, resp := utils.CallRpc(rpc)
+	if err != nil {
+		panic(err.Error())
+	}
+
 	nodeList := resp.Result.([]interface{})
 
 	beego.Info("Response body", resp)

@@ -117,7 +117,10 @@ func call(token string, blockNumber uint64, data []byte) *common.Response {
 		"data": dataHex},
 		utils.EncodeUint64(blockNumber))
 
-	resp := utils.CallRpc(rpc)
+	err, resp := utils.CallRpc(rpc)
+	if err != nil {
+		panic(err.Error())
+	}
 	return resp
 }
 

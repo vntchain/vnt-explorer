@@ -8,13 +8,14 @@ import (
 	"github.com/astaxie/beego"
 	"net/http"
 	"io/ioutil"
+	"errors"
 )
 
 var rpcHost = beego.AppConfig.String("node::rpc_host")
 var rpcPort = beego.AppConfig.String("node::rpc_port")
 var rpcApi = fmt.Sprintf("http://%s:%s/", rpcHost, rpcPort)
 
-func CallRpc(rpc *common.Rpc) *common.Response {
+func CallRpc(rpc *common.Rpc) (error, *common.Response) {
 	rpcJson, err := json.Marshal(rpc)
 
 	buf := bytes.NewBuffer(rpcJson)
@@ -35,7 +36,8 @@ func CallRpc(rpc *common.Rpc) *common.Response {
 	if err != nil {
 		msg := fmt.Sprintf("Failed to read response body: %s", err.Error())
 		beego.Error(msg)
-		panic(msg)
+		return errors.New(msg), nil
+		//panic(msg)
 	}
 
 	obj := new(common.Response)
@@ -43,14 +45,14 @@ func CallRpc(rpc *common.Rpc) *common.Response {
 	if err != nil {
 		msg := fmt.Sprintf("Failed to unmarshal json: %s", err.Error())
 		beego.Error(msg)
-		panic(msg)
+		return errors.New(msg), nil
 	}
 
 	if obj.Error != nil {
 		msg := fmt.Sprintf("Rpc returned with error: code: %d, error: %s", obj.Error.Code, obj.Error.Message)
 		beego.Error(msg)
-		panic(msg)
+		return errors.New(msg), nil
 	}
 
-	return obj
+	return nil, obj
 }

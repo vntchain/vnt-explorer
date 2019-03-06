@@ -64,7 +64,10 @@ func GetRemoteHeight() int64 {
 	rpc := common.NewRpc()
 	rpc.Method = common.Rpc_BlockNumber
 
-	resp := utils.CallRpc(rpc)
+	err, resp := utils.CallRpc(rpc)
+	if err != nil {
+		panic(err.Error())
+	}
 
 	beego.Info("Response body", resp)
 
@@ -84,7 +87,11 @@ func GetBlock(number int64) (*models.Block, []interface{}, []interface{}) {
 
 	rpc.Params = append(rpc.Params, hex, false)
 
-	resp := utils.CallRpc(rpc)
+	err, resp := utils.CallRpc(rpc)
+	if err != nil {
+		panic(err.Error())
+	}
+
 
 	blockMap := resp.Result.(map[string]interface{})
 
@@ -135,14 +142,22 @@ func GetTx(txHash string) *models.Transaction {
 
 	rpc.Params = append(rpc.Params, txHash)
 
-	resp := utils.CallRpc(rpc)
+	err, resp := utils.CallRpc(rpc)
+	if err != nil {
+		panic(err.Error())
+	}
+
 
 	txMap := resp.Result.(map[string]interface{})
 	beego.Info("Transaction: ", txMap)
 
 	rpc.Method = common.Rpc_GetTxReceipt
 
-	resp = utils.CallRpc(rpc)
+	err, resp = utils.CallRpc(rpc)
+	if err != nil {
+		panic(err.Error())
+	}
+
 	receiptMap := resp.Result.(map[string]interface{})
 	beego.Info("Transaction: ", receiptMap)
 
@@ -185,22 +200,40 @@ func ExtractAcct(tx *models.Transaction) {
 	to := tx.To
 	contractAddr := tx.ContractAddr
 
-	if GetAccount(from) == nil {
+	if a := GetAccount(from); a == nil {
 		beego.Info("Block:", tx.BlockNumber, ", will insert normal account:", from)
 		NewAccount(from, tx, ACC_TYPE_NORMAL)
+	} else {
+		beego.Info("Block:", tx.BlockNumber, ", will update normal account:", from)
+		UpdateAccount(a, tx, ACC_TYPE_NORMAL)
 	}
 
-	if to != "" && GetAccount(to) == nil {
-		beego.Info("Block:", tx.BlockNumber, ", will insert normal account:", to)
-		NewAccount(to, tx, ACC_TYPE_NORMAL)
+	if to != "" {
+		if a := GetAccount(to); a == nil {
+			beego.Info("Block:", tx.BlockNumber, ", will insert normal account:", to)
+			NewAccount(to, tx, ACC_TYPE_NORMAL)
+		} else {
+			if a.IsToken {
+				beego.Info("Block:", tx.BlockNumber, ", will update token account:", to)
+				UpdateAccount(a, tx, ACC_TYPE_NORMAL)
+			} else if a.IsContract {
+				beego.Info("Block:", tx.BlockNumber, ", will update contract account:", to)
+				UpdateAccount(a, tx, ACC_TYPE_CONTRACT)
+			} else {
+				beego.Info("Block:", tx.BlockNumber, ", will update normal account:", from)
+				UpdateAccount(a, tx, ACC_TYPE_NORMAL)
+			}
+		}
+	} else if contractAddr != "" {
+		if a := GetAccount(contractAddr); a == nil {
+			beego.Info("Block:", tx.BlockNumber, ", will insert contract account:", contractAddr)
+			NewAccount(contractAddr, tx, ACC_TYPE_CONTRACT)
+		} else if !a.IsContract {
+			a.IsContract = true
+			beego.Info("Block:", tx.BlockNumber, ", will update contract account:", contractAddr)
+			UpdateAccount(a, tx, ACC_TYPE_CONTRACT)
+		}
 	}
-
-	if contractAddr != "" && GetAccount(contractAddr) == nil {
-		beego.Info("Block:", tx.BlockNumber, ", will insert contract account:", contractAddr)
-		NewAccount(contractAddr, tx, ACC_TYPE_CONTRACT)
-	}
-
-	//beego.Info(from, to, contractAddr)
 }
 
 func GetBalance(addr string, blockNumber uint64) string {
@@ -210,14 +243,13 @@ func GetBalance(addr string, blockNumber uint64) string {
 	rpc.Params = append(rpc.Params, addr)
 	rpc.Params = append(rpc.Params, utils.EncodeUint64(blockNumber))
 
-	resp := utils.CallRpc(rpc)
+	err, resp := utils.CallRpc(rpc)
+	if err != nil {
+		panic(err.Error())
+	}
 
 	balance := utils.Hex(resp.Result.(string)).ToString()
 	return balance
-}
-
-func PersistUnknownAcct(addr string, a *models.Account, tx *models.Transaction) {
-
 }
 
 func IsToken(addr string, tx *models.Transaction) (bool, *token.Erc20) {
@@ -269,7 +301,7 @@ func NewAccount(addr string, tx *models.Transaction, _type int) {
 			a.TokenAmount = erc20.TotalSupply.String()
 			a.TokenSymbol = erc20.Symbol
 			a.TokenDecimals = erc20.Decimals.Uint64()
-			a.TokenAcctCount = "1"
+			a.TokenAcctCount = "0"
 			a.TokenLogo = ""
 		}
 	}
@@ -287,59 +319,12 @@ func NewAccount(addr string, tx *models.Transaction, _type int) {
 	acctCache.Set(addr, a)
 }
 
-func UpdateAccount(addr string, tx *models.Transaction, _type int) {
+func UpdateAccount(account *models.Account, tx *models.Transaction, _type int) {
 	if _type == ACC_TYPE_TOKEN {
 		input := utils.MustDecode(tx.Input)
 		beego.Info(input)
 	}
 }
-
-
-
-func PersistNormalAcct(addr string, a *models.Account, tx *models.Transaction) {
-	isCreate := false
-
-	if a == nil {
-		isCreate = true
-		a = &models.Account {
-			Address: addr,
-			Vname: "",
-			TxCount: 1,
-			InitTx: tx.Hash,
-			FirstBlock: tx.BlockNumber,
-			LastBlock: tx.BlockNumber,
-			IsContract: false,
-			IsToken: false,
-		}
-	}
-
-	a = &models.Account {
-		Address: a.Address,
-		TxCount: a.TxCount + 1,
-		LastBlock: tx.BlockNumber,
-	}
-
-	a.Balance = GetBalance(addr, tx.BlockNumber)
-
-	if isCreate {
-		err := a.Insert()
-		if err != nil {
-			msg := fmt.Sprintf("Failed to insert account: %v, error: %s", a, err.Error())
-			beego.Error(msg)
-			panic(msg)
-		}
-	} else {
-		err := a.Update()
-		if err != nil {
-			msg := fmt.Sprintf("Failed to update account: %v, error: %s", a, err.Error())
-			beego.Error(msg)
-			panic(msg)
-		}
-	}
-
-	acctCache.Set(addr, a)
-}
-
 
 func GetAccount(addr string) *models.Account {
 	if _type, err := acctCache.Get(addr); err != nil && _type != nil {
@@ -357,13 +342,4 @@ func GetAccount(addr string) *models.Account {
 		acctCache.Set(addr, a)
 		return a
 	}
-}
-
-func Test() {
-	acctCache.Set("a", "a")
-	a, err := acctCache.Get("a")
-	beego.Info(a.(string), err)
-
-	b, err := acctCache.Get("b")
-	beego.Info(b, err)
 }
