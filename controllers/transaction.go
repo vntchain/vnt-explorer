@@ -43,6 +43,8 @@ func (this *TransactionController) List() {
 		limit = common.DefaultPageSize
 	}
 
+	order := this.GetString("order")
+
 	fields := this.getFields()
 
 	block := this.GetString("block")
@@ -55,7 +57,7 @@ func (this *TransactionController) List() {
 	}
 
 	tx := &models.Transaction{}
-	txs, err := tx.List(offset, limit, block, account, isToken, fields...)
+	txs, err := tx.List(offset, limit, order, block, account, isToken, fields...)
 
 	if err != nil {
 		this.ReturnErrorMsg("Failed to list transactions: ", err.Error())

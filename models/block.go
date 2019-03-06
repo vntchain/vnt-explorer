@@ -29,9 +29,15 @@ func (b *Block) Insert() error {
 	return err
 }
 
-func (b *Block) List(offset, limit int64, fields ...string) ([]*Block, error) {
+func (b *Block) List(offset, limit int64, order string, fields ...string) ([]*Block, error) {
 	o := orm.NewOrm()
 	qs := o.QueryTable(b)
+
+	if order == "asc" {
+		qs = qs.OrderBy("Number")
+	} else {
+		qs = qs.OrderBy("-Number")
+	}
 
 	var blocks []*Block
 	_, err := qs.Offset(offset).Limit(limit).All(&blocks, fields...)

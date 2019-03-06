@@ -28,7 +28,7 @@ type Transaction struct {
 func makeCond(block string, account string, isToken int) *orm.Condition {
 	cond := orm.NewCondition()
 	if len(block) > 0 {
-		cond = cond.And("block_number_id", block)
+		cond = cond.And("blockNumber", block)
 	}
 
 	if len(account) > 0 {
@@ -50,7 +50,13 @@ func (t *Transaction) Insert() error {
 	return err
 }
 
-func (t *Transaction) List(offset, limit int64, block string, account string, isToken int, fields ...string) ([]*Transaction, error) {
+func (t *Transaction) Update() error {
+	o := orm.NewOrm()
+	_, err := o.Update(t)
+	return err
+}
+
+func (t *Transaction) List(offset, limit int64, order, block string, account string, isToken int, fields ...string) ([]*Transaction, error) {
 	o := orm.NewOrm()
 
 	beego.Info("block:", block, "account:", account, "istoken:", isToken)
@@ -60,6 +66,12 @@ func (t *Transaction) List(offset, limit int64, block string, account string, is
 	cond := makeCond(block, account, isToken)
 
 	qs = qs.SetCond(cond)
+
+	if order == "asc" {
+		qs = qs.OrderBy("TimeStamp")
+	} else {
+		qs = qs.OrderBy("-TimeStamp")
+	}
 
 	var txs []*Transaction
 	_, err := qs.All(&txs, fields...)

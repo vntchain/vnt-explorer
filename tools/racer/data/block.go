@@ -275,6 +275,15 @@ func IsToken(addr string, tx *models.Transaction) (bool, *token.Erc20) {
 		return true, erc20
 	}
 
+	// Update the tx
+	tx.IsToken = true
+	err := tx.Update()
+	if err != nil {
+		msg := fmt.Sprintf("Failed to update transaction: %s, error: %s", tx.Hash, err.Error())
+		beego.Error(msg)
+		panic(msg)
+	}
+
 	return false, nil
 }
 

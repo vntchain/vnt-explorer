@@ -42,10 +42,12 @@ func (this *BlockController) List() {
 		limit = common.DefaultPageSize
 	}
 
+	order := this.GetString("order")
+
 	fields := this.getFields()
 
 	block := &models.Block{}
-	blocks, err := block.List(offset, limit, fields...)
+	blocks, err := block.List(offset, limit, order, fields...)
 	if err != nil {
 		this.ReturnErrorMsg("Failed to list blocks: %s", err.Error())
 	} else {
