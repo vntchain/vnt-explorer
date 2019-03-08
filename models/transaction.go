@@ -26,7 +26,7 @@ type Transaction struct {
  	BlockNumber 	uint64 `orm:"index"`
 }
 
-func makeCond(block string, account string, isToken int) *orm.Condition {
+func makeCond(block string, account string, isToken int, start, end int64) *orm.Condition {
 	cond := orm.NewCondition()
 	if len(block) > 0 {
 		cond = cond.And("blockNumber", block)
@@ -42,6 +42,14 @@ func makeCond(block string, account string, isToken int) *orm.Condition {
 		cond = cond.And("is_token", false)
 	} else if isToken == 1 {
 		cond = cond.And("is_token", true)
+	}
+
+	if start >= 0 {
+		cond = cond.And("time_stamp__gt", start)
+	}
+
+	if end >= 0 {
+		cond = cond.And("time_stamp__lte", end)
 	}
 	return cond
 }
@@ -59,14 +67,14 @@ func (t *Transaction) Update() error {
 	return err
 }
 
-func (t *Transaction) List(offset, limit int64, order, block string, account string, isToken int, fields ...string) ([]*Transaction, error) {
+func (t *Transaction) List(offset, limit int64, order, block string, account string, isToken int, start, end int64, fields ...string) ([]*Transaction, error) {
 	o := orm.NewOrm()
 
 	beego.Info("block:", block, "account:", account, "istoken:", isToken)
 
 	qs := o.QueryTable(t).Offset(offset).Limit(limit);
 
-	cond := makeCond(block, account, isToken)
+	cond := makeCond(block, account, isToken, start, end)
 
 	qs = qs.SetCond(cond)
 
@@ -92,10 +100,10 @@ func (t *Transaction) Get(hash string, fields ...string) (*Transaction, error) {
 	return t, err
 }
 
-func (t *Transaction) Count(block string, account string, isToken int) (int64, error) {
+func (t *Transaction) Count(block string, account string, isToken int, start, end int64) (int64, error) {
 	o := orm.NewOrm()
 	qs := o.QueryTable(t)
-	cond := makeCond(block, account, isToken)
+	cond := makeCond(block, account, isToken, start, end)
 
 	qs = qs.SetCond(cond)
 

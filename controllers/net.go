@@ -40,7 +40,7 @@ func (this *NetController) Stats() {
 	topTps := topTpsBlock.Tps
 
 	tx := &models.Transaction{}
-	txCount, err := tx.Count("", "", -1)
+	txCount, err := tx.Count("", "", -1, -1, -1)
 	if err != nil {
 		this.ReturnErrorMsg("Failed to get transaction count: %s", err.Error())
 	}

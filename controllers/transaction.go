@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"github.com/vntchain/vnt-explorer/common"
 	"github.com/astaxie/beego"
+	"strconv"
+	"time"
 )
 
 type TransactionController struct {
@@ -57,7 +59,7 @@ func (this *TransactionController) List() {
 	}
 
 	tx := &models.Transaction{}
-	txs, err := tx.List(offset, limit, order, block, account, isToken, fields...)
+	txs, err := tx.List(offset, limit, order, block, account, isToken, -1, -1, fields...)
 
 	if err != nil {
 		this.ReturnErrorMsg("Failed to list transactions: ", err.Error())
@@ -97,11 +99,63 @@ func (this *TransactionController) Count() {
 	}
 
 	tx := &models.Transaction{}
-	count, err := tx.Count(block, account, isToken)
+	count, err := tx.Count(block, account, isToken, -1, -1)
 
 	if err != nil {
 		this.ReturnErrorMsg("Failed to count transactions: ", err.Error())
 	} else {
 		this.ReturnData(count)
 	}
+}
+
+func (this *TransactionController) History() {
+	beego.Info("Will get history...")
+	days := 14
+	var err error
+	beego.Info("Will get history...days: ", days)
+	daysStr := this.GetString("days")
+	if daysStr != "" {
+		days, err = strconv.Atoi(daysStr)
+		if err != nil {
+			this.ReturnErrorMsg("Wrong format of parameter days: %s", err.Error())
+			return
+		}
+	}
+
+	if days > 100 {
+		days = 100
+	}
+
+	beego.Info("Will get history...days: ", days)
+	history := make([]int64, 0)
+
+	now := time.Now()
+	year := now.Year()
+	month := now.Month()
+	day := now.Day()
+
+	end := time.Date(year, month, day, 24, 0, 0, 0, now.Location())
+	start := end.AddDate(0, 0, -days)
+	during := time.Hour * 24
+
+	beego.Info("Will get history...start: ", start, "end:", end)
+
+	tx := &models.Transaction{}
+
+	for end.Unix() > start.Unix() {
+		left := start
+		right := start.Add(during)
+		beego.Info("Will get history...left: ", left, "right:", right)
+		count, err := tx.Count("", "", -1, left.Unix(), right.Unix())
+		if err != nil {
+			this.ReturnErrorMsg("Failed to get transaction history: %s", err.Error())
+			return
+		}
+		beego.Info("Will get history...count: ", count)
+		history = append(history, count)
+
+		start = right
+	}
+
+	this.ReturnData(history)
 }
