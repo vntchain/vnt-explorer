@@ -7,6 +7,7 @@ import (
 
 	"github.com/astaxie/beego"
 	"github.com/vntchain/vnt-explorer/tools/racer/data"
+	"github.com/vntchain/vnt-explorer/models"
 )
 
 func main() {
@@ -40,10 +41,10 @@ func doSync() {
 		}
 	}()
 
-	rmtHgt, localHgt := checkHeight()
+	rmtHgt, localHgt, lastBlock := checkHeight()
 
 	// localHgt = 14
-	//rmtHgt = 2000
+	rmtHgt = 200
 	beego.Info(fmt.Sprintf("Local height: %d, rmtHeight: %d", localHgt, rmtHgt))
 	if localHgt >= rmtHgt {
 		time.Sleep(2 * time.Second)
@@ -83,8 +84,7 @@ func doSync() {
 			}
 
 			beego.Info("Will extract accounts from transaction: ", txHash)
-			returnAddrs := data.ExtractAcct(tx)
-			leftAddrs = append(leftAddrs, returnAddrs...)
+			data.ExtractAcct(tx)
 
 			tmp, err := strconv.Atoi(tx.GasPrice)
 			if err != nil {
@@ -95,8 +95,15 @@ func doSync() {
 			// beego.Info("---------> tx.GasUsed == ", tx.GasUsed, "tx.GasPrice ==", tx.GasPrice)
 		}
 
+		block.TxCount = len(txs)
+		time := float32(2.0)
+		if lastBlock != nil {
+			time = float32(block.TimeStamp - lastBlock.TimeStamp)
+		}
+		block.Tps = float32(block.TxCount) / time
+
 		// Persist witness accounts and other unknown accounts from token transfer
-		data.PersistUnknownAccounts(leftAddrs, block.Number)
+		data.PersistWitnesses(leftAddrs, block.Number)
 
 		// compute blockReward
 		// 区块奖励，0-47304000都是6个vnt，47304001-94608000是3个，再之后是1.5个
@@ -114,7 +121,7 @@ func doSync() {
 		// beego.Info("---------> block.BlockReward == ", block.BlockReward)
 		err := block.Insert()
 		if err != nil {
-			msg := fmt.Sprintf("Failed to insert transaction: %s", err.Error())
+			msg := fmt.Sprintf("Failed to insert block: %s", err.Error())
 			panic(msg)
 		}
 
@@ -122,9 +129,9 @@ func doSync() {
 	}
 }
 
-func checkHeight() (int64, int64) {
+func checkHeight() (int64, int64, *models.Block) {
 	rmtHgt := data.GetRemoteHeight()
-	localHgt := data.GetLocalHeight()
+	localHgt, lastBlock := data.GetLocalHeight()
 
 	if localHgt > rmtHgt {
 		msg := fmt.Sprintf("Local height %d is bigger than remote height: %d, please check your remote node", localHgt, rmtHgt)
@@ -132,5 +139,5 @@ func checkHeight() (int64, int64) {
 		panic(msg)
 	}
 
-	return rmtHgt, localHgt
+	return rmtHgt, localHgt, lastBlock
 }

@@ -116,7 +116,7 @@ func GetTransferAddrs(tx *models.Transaction) (addrs []string) {
 	case "transfer":
 		type Input struct {
 			To 		vntCommon.Address
-			value 	*big.Int
+			Value 	*big.Int
 		}
 
 		var _input Input
@@ -130,12 +130,16 @@ func GetTransferAddrs(tx *models.Transaction) (addrs []string) {
 		}
 
 		addrs = append(addrs, tx.From, _input.To.String())
+
+		tx.TokenFrom = tx.From
+		tx.TokenTo = _input.To.String()
+		tx.TokenAmount = _input.Value.String()
 		break
 	case "transferFrom":
 		type Input struct {
 			From	vntCommon.Address
 			To 		vntCommon.Address
-			value 	*big.Int
+			Value 	*big.Int
 		}
 
 		var _input Input
@@ -147,6 +151,10 @@ func GetTransferAddrs(tx *models.Transaction) (addrs []string) {
 		}
 
 		addrs = append(addrs, tx.From, _input.From.String(), _input.To.String())
+
+		tx.TokenFrom = _input.From.String()
+		tx.TokenTo = _input.To.String()
+		tx.TokenAmount = _input.Value.String()
 	}
 
 	return

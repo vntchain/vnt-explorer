@@ -42,3 +42,18 @@ func (n *Node) Get(address string) (*Node, error) {
 	err := o.Read(n)
 	return n, err
 }
+
+func (n *Node) Count(status int) (int64,error) {
+	o := orm.NewOrm()
+
+	qs :=o.QueryTable(n)
+
+	cond := orm.NewCondition()
+
+	if status == 0 || status == 1 {
+		cond = cond.And("status", status)
+	}
+
+	qs = qs.SetCond(cond)
+	return qs.Count()
+}

@@ -20,6 +20,7 @@ type Transaction struct {
 	Status			int
 	ContractAddr	string // when transaction is a contract creation
 	IsToken     	bool
+	TokenFrom     	string `orm:"index"`
 	TokenTo     	string `orm:"index"`
 	TokenAmount 	string
  	BlockNumber 	uint64 `orm:"index"`
@@ -33,7 +34,8 @@ func makeCond(block string, account string, isToken int) *orm.Condition {
 
 	if len(account) > 0 {
 		cond2 := orm.NewCondition()
-		cond = cond.AndCond(cond2.Or("from", account).Or("to", account).Or("token_to", account))
+		cond = cond.AndCond(cond2.Or("from", account).Or("to", account).
+			Or("token_to", account).Or("token_from", account).Or("contract_addr", account))
 	}
 
 	if isToken == 0 {
@@ -46,7 +48,8 @@ func makeCond(block string, account string, isToken int) *orm.Condition {
 
 func (t *Transaction) Insert() error {
 	o := orm.NewOrm()
-	_, err := o.Insert(t)
+	//_, err := o.Insert(t)
+	_, err := o.InsertOrUpdate(t)
 	return err
 }
 

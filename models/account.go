@@ -16,6 +16,7 @@ type Account struct {
 	Abi            string `orm:"type(text)"`
 	Home           string
 	InitTx         string
+	LastTx		   string
 	IsToken        bool
 	TokenType      int
 	TokenSymbol    string
@@ -73,11 +74,11 @@ func (a *Account) Count(isContract, isToken int) (int64, error) {
 
 func (a *Account) makeCond(isContract, isToken int) *orm.Condition {
 	cond := orm.NewCondition()
-	if isContract >= 0 {
-		cond = cond.And("IsContract", isContract == 1)
-	}
 	if isToken >= 0 {
 		cond = cond.And("IsToken", isToken == 1)
+	} else if isContract >= 0 {
+		cond = cond.And("IsContract", isContract == 1)
 	}
+
 	return cond
 }
