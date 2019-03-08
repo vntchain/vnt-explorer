@@ -109,7 +109,6 @@ func (this *TransactionController) Count() {
 }
 
 func (this *TransactionController) History() {
-	beego.Info("Will get history...")
 	days := 14
 	var err error
 	beego.Info("Will get history...days: ", days)
@@ -126,7 +125,6 @@ func (this *TransactionController) History() {
 		days = 100
 	}
 
-	beego.Info("Will get history...days: ", days)
 	history := make([]int64, 0)
 
 	now := time.Now()
@@ -145,13 +143,11 @@ func (this *TransactionController) History() {
 	for end.Unix() > start.Unix() {
 		left := start
 		right := start.Add(during)
-		beego.Info("Will get history...left: ", left, "right:", right)
 		count, err := tx.Count("", "", -1, left.Unix(), right.Unix())
 		if err != nil {
 			this.ReturnErrorMsg("Failed to get transaction history: %s", err.Error())
 			return
 		}
-		beego.Info("Will get history...count: ", count)
 		history = append(history, count)
 
 		start = right
