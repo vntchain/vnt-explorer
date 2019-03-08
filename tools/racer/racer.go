@@ -44,7 +44,7 @@ func doSync() {
 	rmtHgt, localHgt, lastBlock := checkHeight()
 
 	// localHgt = 14
-	rmtHgt = 200
+	rmtHgt = 2000
 	beego.Info(fmt.Sprintf("Local height: %d, rmtHeight: %d", localHgt, rmtHgt))
 	if localHgt >= rmtHgt {
 		time.Sleep(2 * time.Second)

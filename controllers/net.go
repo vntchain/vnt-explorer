@@ -18,6 +18,12 @@ type NetStats struct {
 	CandiNode		int64
 }
 
+type SearchBody struct {
+	Block	*models.Block
+	Tx		*models.Transaction
+	Account	*models.Account
+}
+
 func (this *NetController) Stats() {
 	block := &models.Block{}
 	block, err := block.Last()
