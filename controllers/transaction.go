@@ -125,7 +125,15 @@ func (this *TransactionController) History() {
 		days = 100
 	}
 
-	history := make([]int64, 0)
+	type Item struct {
+		TimeStamp	int64
+		Year 		int
+		Month		int
+		Day			int
+		Count		int64
+	}
+
+	history := make([]Item, 0)
 
 	now := time.Now()
 	year := now.Year()
@@ -143,12 +151,23 @@ func (this *TransactionController) History() {
 	for end.Unix() > start.Unix() {
 		left := start
 		right := start.Add(during)
+
+
 		count, err := tx.Count("", "", -1, left.Unix(), right.Unix())
 		if err != nil {
 			this.ReturnErrorMsg("Failed to get transaction history: %s", err.Error())
 			return
 		}
-		history = append(history, count)
+
+		item := Item {
+			end.Unix(),
+			left.Year(),
+			int(left.Month()),
+			left.Day(),
+			count,
+		}
+
+		history = append(history, item)
 
 		start = right
 	}
