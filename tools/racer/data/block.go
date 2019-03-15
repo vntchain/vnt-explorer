@@ -386,7 +386,6 @@ func UpdateAccount(account *models.Account, tx *models.Transaction, _type int) {
 
 	// Save the accounts in token transfer
 	for _, a := range retAddrs {
-		a := strings.ToLower(a)
 		if acct := GetAccount(a); acct != nil {
 			acct.Balance = GetBalance(a, tx.BlockNumber)
 			acct.LastBlock = tx.BlockNumber
@@ -431,6 +430,7 @@ func PersistWitnesses(accts []string, blockNumber uint64) {
 }
 
 func GetAccount(addr string) *models.Account {
+	addr = strings.ToLower(addr)
 	if _type, err := acctCache.Get(addr); err == nil && _type != nil {
 		beego.Info("Address hit in cache:", addr)
 		return _type.(*models.Account)
