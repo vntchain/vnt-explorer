@@ -330,16 +330,7 @@ func NewAccount(addr string, tx *models.Transaction, _type int, txCount uint64) 
 	}
 
 	a.Balance = GetBalance(addr, tx.BlockNumber)
-
-	err := a.Insert()
-
-	if err != nil {
-		msg := fmt.Sprintf("Failed to insert account: %v, error: %s", a, err.Error())
-		beego.Error(msg)
-		panic(msg)
-	}
-
-	acctCache.Set(addr, a)
+	InsertAcc(addr, a)
 }
 
 func UpdateAccount(account *models.Account, tx *models.Transaction, _type int) {
@@ -376,14 +367,7 @@ func UpdateAccount(account *models.Account, tx *models.Transaction, _type int) {
 		retAddrs = token.UpdateTokenBalance(account, tx)
 	}
 
-	err := account.Update()
-	if err != nil {
-		msg := fmt.Sprintf("Failed to update account: %s", err.Error())
-		beego.Error(msg)
-		panic(msg)
-	}
-	acctCache.Set(account.Address, account)
-
+	UpdateAcc(account.Address, account)
 	// Save the accounts in token transfer
 	for _, a := range retAddrs {
 		if acct := GetAccount(a); acct != nil {
@@ -393,14 +377,7 @@ func UpdateAccount(account *models.Account, tx *models.Transaction, _type int) {
 				acct.LastTx = tx.Hash
 				acct.TxCount += 1
 			}
-			err := acct.Update()
-			if err != nil {
-				msg := fmt.Sprintf("Failed to update account: %s, error: %s", a, err.Error())
-				beego.Error(msg)
-				panic(err)
-			}
-			beego.Info("Updated accounts: ", a)
-			acctCache.Set(a, acct)
+			UpdateAcc(a, acct)
 		} else {
 			NewAccount(a, tx, ACC_TYPE_NORMAL, 1)
 			beego.Info("Inserted accounts: ", a)
@@ -414,14 +391,7 @@ func PersistWitnesses(accts []string, blockNumber uint64) {
 		if acct := GetAccount(a); acct != nil {
 			acct.Balance = GetBalance(a, blockNumber)
 			acct.LastBlock = blockNumber
-			err := acct.Update()
-			if err != nil {
-				msg := fmt.Sprintf("Failed to update account: %s, error: %s", a, err.Error())
-				beego.Error(msg)
-				panic(err)
-			}
-			beego.Info("Updated witness account: ", a)
-			acctCache.Set(a, acct)
+			UpdateAcc(a, acct)
 		} else {
 			NewAccount(a, &models.Transaction{BlockNumber: blockNumber}, ACC_TYPE_NORMAL, 0)
 			beego.Info("Inserted witness account: ", a)
@@ -446,4 +416,26 @@ func GetAccount(addr string) *models.Account {
 		acctCache.Set(addr, a)
 		return a
 	}
+}
+
+// insert into db and cache
+func InsertAcc(addr string, acct *models.Account) {
+	addr = strings.ToLower(addr)
+	if err := acct.Insert(); err != nil {
+		msg := fmt.Sprintf("Failed to insert account: %v, error: %s", acct, err.Error())
+		beego.Error(msg)
+		panic(msg)
+	}
+	acctCache.Set(addr, acct)
+}
+
+// update db and cache
+func UpdateAcc(addr string, acct *models.Account) {
+	addr = strings.ToLower(addr)
+	if err := acct.Update(); err != nil {
+		msg := fmt.Sprintf("Failed to update account: %s, error: %s", addr, err.Error())
+		beego.Error(msg)
+		panic(err)
+	}
+	acctCache.Set(addr, acct)
 }
