@@ -1,24 +1,25 @@
 package data
 
 import (
-	"github.com/vntchain/vnt-explorer/models"
 	"fmt"
-	"github.com/astaxie/beego"
-	"github.com/vntchain/vnt-explorer/common"
 	"math/big"
 	"strings"
-	"github.com/vntchain/vnt-explorer/common/utils"
+
+	"github.com/astaxie/beego"
 	"github.com/bluele/gcache"
+	"github.com/vntchain/vnt-explorer/common"
+	"github.com/vntchain/vnt-explorer/common/utils"
+	"github.com/vntchain/vnt-explorer/models"
 	"github.com/vntchain/vnt-explorer/tools/racer/token"
 )
 
 var acctCache = gcache.New(10000).LRU().Build()
 
 const (
-	ACC_TYPE_NULL		= 0
-	ACC_TYPE_NORMAL 	= 1
-	ACC_TYPE_CONTRACT 	= 2
-	ACC_TYPE_TOKEN 		= 3
+	ACC_TYPE_NULL     = 0
+	ACC_TYPE_NORMAL   = 1
+	ACC_TYPE_CONTRACT = 2
+	ACC_TYPE_TOKEN    = 3
 )
 
 func GetLocalHeight() (int64, *models.Block) {
@@ -92,7 +93,6 @@ func GetBlock(number int64) (*models.Block, []interface{}, []interface{}) {
 		panic(err.Error())
 	}
 
-
 	blockMap := resp.Result.(map[string]interface{})
 
 	beego.Info("BlockMap: ", blockMap)
@@ -108,15 +108,15 @@ func GetBlock(number int64) (*models.Block, []interface{}, []interface{}) {
 	gasLimit := utils.Hex(blockMap["gasLimit"].(string)).ToUint64()
 
 	b := &models.Block{
-		Number: bNumber,
-		TimeStamp: timestamp,
-		Hash: blockMap["hash"].(string),
+		Number:     bNumber,
+		TimeStamp:  timestamp,
+		Hash:       blockMap["hash"].(string),
 		ParentHash: blockMap["parentHash"].(string),
-		Producer: blockMap["producer"].(string),
-		Size: fmt.Sprintf("%d", size),
-		GasUsed: gasUsed,
-		GasLimit: gasLimit,
-		ExtraData: blockMap["extraData"].(string),
+		Producer:   blockMap["producer"].(string),
+		Size:       fmt.Sprintf("%d", size),
+		GasUsed:    gasUsed,
+		GasLimit:   gasLimit,
+		ExtraData:  blockMap["extraData"].(string),
 	}
 
 	var txs, witnesses []interface{}
@@ -145,7 +145,6 @@ func GetTx(txHash string) *models.Transaction {
 		panic(err.Error())
 	}
 
-
 	txMap := resp.Result.(map[string]interface{})
 	beego.Info("Transaction: ", txMap)
 
@@ -160,16 +159,16 @@ func GetTx(txHash string) *models.Transaction {
 	beego.Info("Transaction: ", receiptMap)
 
 	tx := &models.Transaction{
-		Hash: txMap["hash"].(string),
-		From: txMap["from"].(string),
-		Value: utils.Hex(txMap["value"].(string)).ToString(),
-		GasLimit: utils.Hex(txMap["gas"].(string)).ToUint64(),
-		GasPrice: utils.Hex(txMap["gasPrice"].(string)).ToString(),
-		GasUsed: utils.Hex(receiptMap["gasUsed"].(string)).ToUint64(),
-		Nonce: utils.Hex(txMap["nonce"].(string)).ToUint64(),
-		Index: utils.Hex(txMap["transactionIndex"].(string)).ToInt(),
-		Input: txMap["input"].(string),
-		Status:utils.Hex(receiptMap["status"].(string)).ToInt(),
+		Hash:        txMap["hash"].(string),
+		From:        txMap["from"].(string),
+		Value:       utils.Hex(txMap["value"].(string)).ToString(),
+		GasLimit:    utils.Hex(txMap["gas"].(string)).ToUint64(),
+		GasPrice:    utils.Hex(txMap["gasPrice"].(string)).ToString(),
+		GasUsed:     utils.Hex(receiptMap["gasUsed"].(string)).ToUint64(),
+		Nonce:       utils.Hex(txMap["nonce"].(string)).ToUint64(),
+		Index:       utils.Hex(txMap["transactionIndex"].(string)).ToInt(),
+		Input:       txMap["input"].(string),
+		Status:      utils.Hex(receiptMap["status"].(string)).ToInt(),
 		BlockNumber: utils.Hex(txMap["blockNumber"].(string)).ToUint64(),
 	}
 
@@ -201,7 +200,7 @@ func ExtractAcct(tx *models.Transaction) {
 
 	if a := GetAccount(from); a == nil {
 		beego.Info("Block:", tx.BlockNumber, ", will insert normal account:", from)
-		NewAccount(from, tx, ACC_TYPE_NORMAL)
+		NewAccount(from, tx, ACC_TYPE_NORMAL, 1)
 	} else {
 		beego.Info("Block:", tx.BlockNumber, ", will update normal account:", from)
 		UpdateAccount(a, tx, ACC_TYPE_NORMAL)
@@ -210,7 +209,7 @@ func ExtractAcct(tx *models.Transaction) {
 	if to != "" {
 		if a := GetAccount(to); a == nil {
 			beego.Info("Block:", tx.BlockNumber, ", will insert normal account:", to)
-			NewAccount(to, tx, ACC_TYPE_NORMAL)
+			NewAccount(to, tx, ACC_TYPE_NORMAL, 1)
 		} else {
 			if a.IsToken {
 				beego.Info("Block:", tx.BlockNumber, ", will update token account:", to)
@@ -232,11 +231,11 @@ func ExtractAcct(tx *models.Transaction) {
 				UpdateAccount(a, tx, ACC_TYPE_NORMAL)
 			}
 		}
-	} else if contractAddr != "" {  // this case is for contract creation
+	} else if contractAddr != "" { // this case is for contract creation
 		if a := GetAccount(contractAddr); a == nil {
 			// new contract account
 			beego.Info("Block:", tx.BlockNumber, ", will insert contract account:", contractAddr)
-			NewAccount(contractAddr, tx, ACC_TYPE_CONTRACT)
+			NewAccount(contractAddr, tx, ACC_TYPE_CONTRACT, 1)
 		} else if !a.IsContract {
 			// this account already exists as a normal account,
 			// will change it to a contract account
@@ -272,11 +271,11 @@ func IsToken(addr string, tx *models.Transaction) (bool, *token.Erc20) {
 
 	if totalSupply != nil && decimals != nil && symbol != "" && tokenName != "" {
 		erc20 := &token.Erc20{
-			Address: addr,
-			TokenName: tokenName,
+			Address:     addr,
+			TokenName:   tokenName,
 			TotalSupply: totalSupply,
-			Symbol: symbol,
-			Decimals: decimals,
+			Symbol:      symbol,
+			Decimals:    decimals,
 		}
 
 		// Update the tx
@@ -291,23 +290,22 @@ func IsToken(addr string, tx *models.Transaction) (bool, *token.Erc20) {
 		return true, erc20
 	}
 
-
 	return false, nil
 }
 
 // Insert a new Account, in this case, tye _type only could be "normal" or "contract"
-func NewAccount(addr string, tx *models.Transaction, _type int) {
-	a := &models.Account {
-		Address: addr,
-		Vname: addr, //todo: get vname
-		Balance: "0",
-		TxCount: 1,
-		FirstBlock: tx.BlockNumber,
-		LastBlock: tx.BlockNumber,
-		TokenAmount: "0",
+func NewAccount(addr string, tx *models.Transaction, _type int, txCount uint64) {
+	a := &models.Account{
+		Address:        addr,
+		Vname:          addr, //todo: get vname
+		Balance:        "0",
+		TxCount:        txCount,
+		FirstBlock:     tx.BlockNumber,
+		LastBlock:      tx.BlockNumber,
+		TokenAmount:    "0",
 		TokenAcctCount: "0",
-		InitTx: tx.Hash,
-		LastTx: tx.Hash,
+		InitTx:         tx.Hash,
+		LastTx:         tx.Hash,
 	}
 
 	if _type == ACC_TYPE_CONTRACT {
@@ -315,7 +313,7 @@ func NewAccount(addr string, tx *models.Transaction, _type int) {
 		a.ContractName = "" // TODO: extract contract name from contract code
 		a.ContractOwner = tx.From
 
-		beego.Info("######### a.ContractOwner:",a.ContractOwner)
+		beego.Info("######### a.ContractOwner:", a.ContractOwner)
 
 		if ok, erc20 := IsToken(addr, tx); ok {
 			a.IsToken = true
@@ -388,6 +386,7 @@ func UpdateAccount(account *models.Account, tx *models.Transaction, _type int) {
 
 	// Save the accounts in token transfer
 	for _, a := range retAddrs {
+		a := strings.ToLower(a)
 		if acct := GetAccount(a); acct != nil {
 			acct.Balance = GetBalance(a, tx.BlockNumber)
 			acct.LastBlock = tx.BlockNumber
@@ -404,7 +403,7 @@ func UpdateAccount(account *models.Account, tx *models.Transaction, _type int) {
 			beego.Info("Updated accounts: ", a)
 			acctCache.Set(a, acct)
 		} else {
-			NewAccount(a, tx, ACC_TYPE_NORMAL)
+			NewAccount(a, tx, ACC_TYPE_NORMAL, 1)
 			beego.Info("Inserted accounts: ", a)
 		}
 	}
@@ -425,7 +424,7 @@ func PersistWitnesses(accts []string, blockNumber uint64) {
 			beego.Info("Updated witness account: ", a)
 			acctCache.Set(a, acct)
 		} else {
-			NewAccount(a, &models.Transaction{BlockNumber:blockNumber}, ACC_TYPE_NORMAL)
+			NewAccount(a, &models.Transaction{BlockNumber: blockNumber}, ACC_TYPE_NORMAL, 0)
 			beego.Info("Inserted witness account: ", a)
 		}
 	}
