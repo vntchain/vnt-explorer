@@ -52,9 +52,9 @@ func (this *TransactionController) List() {
 	block := this.GetString("block")
 	account := this.GetString("account")
 
-	isToken, err := this.GetInt("istoken")
+	isToken, err := this.GetInt("isToken")
 	if err != nil {
-		beego.Warn("Failed to read istoken: ", err.Error())
+		beego.Warn("Failed to read isToken: ", err.Error())
 		isToken = -1
 	}
 
@@ -92,9 +92,9 @@ func (this *TransactionController) Count() {
 	block := this.GetString("block")
 	account := this.GetString("account")
 
-	isToken, err := this.GetInt("istoken")
+	isToken, err := this.GetInt("isToken")
 	if err != nil {
-		beego.Warn("Failed to read istoken: ", err.Error())
+		beego.Warn("Failed to read isToken: ", err.Error())
 		isToken = -1
 	}
 
