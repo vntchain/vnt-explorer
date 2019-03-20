@@ -64,3 +64,21 @@ func (t *TokenBalance) GetById(id int) (*TokenBalance, error) {
 	err := o.Read(t)
 	return t, err
 }
+
+func (t *TokenBalance) Count(account, token string) (int64, error) {
+	o := orm.NewOrm()
+	qs := o.QueryTable(t)
+
+	cond := orm.NewCondition()
+	if account != "" {
+		cond = cond.And("Account", account)
+	}
+
+	if token != "" {
+		cond = cond.And("Token", token)
+	}
+
+	qs = qs.SetCond(cond)
+
+	return qs.Count()
+}

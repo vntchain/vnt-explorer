@@ -52,7 +52,6 @@ func (this *TokenBalanceController) ListByToken() {
 	} else {
 		this.ReturnData(dbItemList)
 	}
-
 }
 
 func (this *TokenBalanceController) ListByAccount() {
@@ -80,4 +79,28 @@ func (this *TokenBalanceController) ListByAccount() {
 		this.ReturnData(dbItemList)
 	}
 
+}
+
+func (this *TokenBalanceController) TokenCount() {
+	account := this.Ctx.Input.Param(":address")
+
+	tokenBalance := &models.TokenBalance{}
+	count, err := tokenBalance.Count(account, "")
+	if err != nil {
+		this.ReturnErrorMsg("Failed to get account token count: %s", err.Error())
+	} else {
+		this.ReturnData(count)
+	}
+}
+
+func (this *TokenBalanceController) HolderCount() {
+	tokenAddress := this.Ctx.Input.Param(":address")
+
+	tokenBalance := &models.TokenBalance{}
+	count, err := tokenBalance.Count("", tokenAddress)
+	if err != nil {
+		this.ReturnErrorMsg("Failed to get account token count: %s", err.Error())
+	} else {
+		this.ReturnData(count)
+	}
 }
