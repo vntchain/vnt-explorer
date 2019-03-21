@@ -15,6 +15,8 @@ type Node struct {
 	TotalBounty     string
 	ExtractedBounty string
 	LastExtractTime string
+	Longitude       float64
+	Latitude        float64
 	Block           []*Block `orm:"reverse(many)"`
 }
 
