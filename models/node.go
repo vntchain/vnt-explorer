@@ -5,14 +5,17 @@ import (
 )
 
 type Node struct {
-	Address string `orm:"pk"`
-	Vname   string `orm:"unique"`
-	Home    string
-	Logo    string
-	Ip      string
-	Status  int `orm:"index"`
-	Votes   string
-	Block   []*Block `orm:"reverse(many)"`
+	Address         string `orm:"pk"`
+	Vname           string `orm:"unique"`
+	Home            string
+	Logo            string
+	Ip              string
+	Status          int `orm:"index"`
+	Votes           string
+	TotalBounty     string
+	ExtractedBounty string
+	LastExtractTime string
+	Block           []*Block `orm:"reverse(many)"`
 }
 
 func (n *Node) Insert() error {
@@ -43,10 +46,10 @@ func (n *Node) Get(address string) (*Node, error) {
 	return n, err
 }
 
-func (n *Node) Count(status int) (int64,error) {
+func (n *Node) Count(status int) (int64, error) {
 	o := orm.NewOrm()
 
-	qs :=o.QueryTable(n)
+	qs := o.QueryTable(n)
 
 	cond := orm.NewCondition()
 
