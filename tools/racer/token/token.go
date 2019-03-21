@@ -12,6 +12,7 @@ import (
 	"github.com/vntchain/vnt-explorer/common"
 	"github.com/vntchain/vnt-explorer/common/utils"
 	"github.com/astaxie/beego/orm"
+	"strconv"
 )
 
 var transferSig = map[string]string {
@@ -73,6 +74,16 @@ func UpdateTokenBalance(token *models.Account, tx *models.Transaction) []string 
 				 if err = tokenBalance.Insert(); err != nil {
 				 	msg := fmt.Sprintf("Failed to insert token balance, token:%s, address:%s, balance:%s",
 				 		tokenBalance.Token, tokenBalance.Account, tokenBalance.Balance)
+				 	beego.Error(msg)
+				 	panic(msg)
+				 }
+
+				 currCount, _ := strconv.ParseUint(token.TokenAcctCount, 10, 64)
+				 currCount ++
+				 token.TokenAcctCount = fmt.Sprintf("%d", currCount)
+				 err = token.Update()
+				 if err != nil {
+				 	msg := fmt.Sprintf("Failed to update token account count, error: %s", err.Error())
 				 	beego.Error(msg)
 				 	panic(msg)
 				 }

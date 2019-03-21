@@ -2,6 +2,9 @@ package models
 
 import (
 	"github.com/astaxie/beego/orm"
+	"strconv"
+	"fmt"
+	"github.com/astaxie/beego"
 )
 
 type TokenBalance struct {
@@ -9,6 +12,7 @@ type TokenBalance struct {
 	Account *Account `orm:"rel(fk)"`
 	Token   *Account `orm:"rel(fk)"`
 	Balance string
+	Percent string	 `orm:"-"`
 }
 
 func (t *TokenBalance) TableUnique() [][]string {
@@ -47,9 +51,17 @@ func (t *TokenBalance) List(account, token, order string, offset, limit int, fie
 
 	var tokens []*TokenBalance
 	_, err := qs.Offset(offset).Limit(limit).All(&tokens, fields...)
+
 	for _, token := range tokens {
 		o.Read(token.Account)
 		o.Read(token.Token)
+
+		balance, _ := strconv.ParseFloat(token.Balance, 64)
+		total, _ := strconv.ParseFloat(token.Token.TokenAmount, 64)
+		beego.Info("%f-%f", balance, total)
+		percent := balance / total * 100
+
+		token.Percent = fmt.Sprintf("%f", percent)
 	}
 	return tokens, err
 }
