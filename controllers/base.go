@@ -1,8 +1,8 @@
 package controllers
 
 import (
-	"github.com/astaxie/beego"
 	"fmt"
+	"github.com/astaxie/beego"
 	"strings"
 )
 
@@ -11,12 +11,12 @@ type BaseController struct {
 }
 
 type Response struct {
-	Ok 		int			`json:"ok"`
-	Err		string		`json:"err"`
-	Data	interface{}	`json:"data"`
+	Ok   int         `json:"ok"`
+	Err  string      `json:"err"`
+	Data interface{} `json:"data"`
 }
 
-func makeResp (err string, data interface{}) *Response {
+func makeResp(err string, data interface{}) *Response {
 	isOk := len(err) == 0
 	var ok int
 	if isOk {
@@ -24,7 +24,7 @@ func makeResp (err string, data interface{}) *Response {
 	} else {
 		ok = 0
 	}
-	resp := &Response {
+	resp := &Response{
 		ok,
 		err,
 		data,
@@ -39,7 +39,7 @@ func (c *BaseController) ReturnErrorMsg(format, err string) {
 	msg := fmt.Sprintf(format, err)
 	beego.Error(msg)
 	c.Ctx.Output.SetStatus(200)
-	c.Data["json"] = makeResp(err, nil)
+	c.Data["json"] = makeResp(msg, nil)
 	c.ServeJSON()
 }
 

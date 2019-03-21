@@ -21,6 +21,7 @@ func registerModel() {
 	orm.RegisterModel(new(models.Node))
 	orm.RegisterModel(new(models.TokenBalance))
 	orm.RegisterModel(new(models.Transaction))
+	orm.RegisterModel(new(models.Hydrant))
 }
 
 func alterTable() {

@@ -331,7 +331,7 @@ func NewAccount(addr string, tx *models.Transaction, _type int, txCount uint64) 
 	}
 
 	a.Balance = GetBalance(addr, tx.BlockNumber)
-	InsertAcc(addr, a)
+	insertAcc(addr, a)
 }
 
 func UpdateAccount(account *models.Account, tx *models.Transaction, _type int) {
@@ -368,7 +368,7 @@ func UpdateAccount(account *models.Account, tx *models.Transaction, _type int) {
 		retAddrs = token.UpdateTokenBalance(account, tx)
 	}
 
-	UpdateAcc(account.Address, account)
+	updateAcc(account.Address, account)
 	// Save the accounts in token transfer
 	for _, a := range retAddrs {
 		if acct := GetAccount(a); acct != nil {
@@ -378,7 +378,7 @@ func UpdateAccount(account *models.Account, tx *models.Transaction, _type int) {
 				acct.LastTx = tx.Hash
 				acct.TxCount += 1
 			}
-			UpdateAcc(a, acct)
+			updateAcc(a, acct)
 		} else {
 			NewAccount(a, tx, ACC_TYPE_NORMAL, 1)
 			beego.Info("Inserted accounts: ", a)
@@ -392,7 +392,7 @@ func PersistWitnesses(accts []string, blockNumber uint64) {
 		if acct := GetAccount(a); acct != nil {
 			acct.Balance = GetBalance(a, blockNumber)
 			acct.LastBlock = blockNumber
-			UpdateAcc(a, acct)
+			updateAcc(a, acct)
 		} else {
 			NewAccount(a, &models.Transaction{BlockNumber: blockNumber}, ACC_TYPE_NORMAL, 0)
 			beego.Info("Inserted witness account: ", a)
@@ -420,7 +420,7 @@ func GetAccount(addr string) *models.Account {
 }
 
 // insert into db and cache
-func InsertAcc(addr string, acct *models.Account) {
+func insertAcc(addr string, acct *models.Account) {
 	addr = strings.ToLower(addr)
 	if err := acct.Insert(); err != nil {
 		msg := fmt.Sprintf("Failed to insert account: %v, error: %s", acct, err.Error())
@@ -431,7 +431,7 @@ func InsertAcc(addr string, acct *models.Account) {
 }
 
 // update db and cache
-func UpdateAcc(addr string, acct *models.Account) {
+func updateAcc(addr string, acct *models.Account) {
 	addr = strings.ToLower(addr)
 	if err := acct.Update(); err != nil {
 		msg := fmt.Sprintf("Failed to update account: %s, error: %s", addr, err.Error())
