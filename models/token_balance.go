@@ -6,14 +6,14 @@ import (
 
 type TokenBalance struct {
 	Id      int
-	Account string `orm:"index"`
-	Token   string `orm:"index"`
+	Account *Account `orm:"rel(fk)"`
+	Token   *Account `orm:"rel(fk)"`
 	Balance string
 }
 
 func (t *TokenBalance) TableUnique() [][]string {
 	return [][]string{
-		{"Account", "Token"},
+		{"account_id", "token_id"},
 	}
 }
 
@@ -34,9 +34,9 @@ func (t *TokenBalance) List(account, token, order string, offset, limit int, fie
 	qs := o.QueryTable(t)
 	cond := orm.NewCondition()
 	if len(account) > 0 {
-		cond = cond.And("Account", account)
+		cond = cond.And("account__address", account)
 	} else if len(token) > 0 {
-		cond = cond.And("Token", token)
+		cond = cond.And("token__address", token)
 	}
 	qs = qs.SetCond(cond)
 	if order == "asc" {
@@ -47,13 +47,17 @@ func (t *TokenBalance) List(account, token, order string, offset, limit int, fie
 
 	var tokens []*TokenBalance
 	_, err := qs.Offset(offset).Limit(limit).All(&tokens, fields...)
+	for _, token := range tokens {
+		o.Read(token.Account)
+		o.Read(token.Token)
+	}
 	return tokens, err
 }
 
 func (t *TokenBalance) GetByAddr(account string, token string) (*TokenBalance, error) {
 	o := orm.NewOrm()
-	t.Account = account
-	t.Token = token
+	t.Account = &Account{Address:account}
+	t.Token = &Account{Address:token}
 	err := o.Read(t, "Account", "Token")
 	return t, err
 }

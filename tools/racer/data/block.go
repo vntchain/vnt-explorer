@@ -181,9 +181,10 @@ func GetTx(txHash string) *models.Transaction {
 		if contractAddr, ok := receiptMap["contractAddress"].(string); ok {
 			tx.ContractAddr = contractAddr
 		}
+		tx.To = nil
+	} else {
+		tx.To = &models.Account{Address: to}
 	}
-
-	tx.To = to
 
 	return tx
 }
@@ -206,10 +207,10 @@ func ExtractAcct(tx *models.Transaction) {
 		UpdateAccount(a, tx, ACC_TYPE_NORMAL)
 	}
 
-	if to != "" {
-		if a := GetAccount(to); a == nil {
+	if to != nil && to.Address != "" {
+		if a := GetAccount(to.Address); a == nil {
 			beego.Info("Block:", tx.BlockNumber, ", will insert normal account:", to)
-			NewAccount(to, tx, ACC_TYPE_NORMAL, 1)
+			NewAccount(to.Address, tx, ACC_TYPE_NORMAL, 1)
 		} else {
 			if a.IsToken {
 				beego.Info("Block:", tx.BlockNumber, ", will update token account:", to)

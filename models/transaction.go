@@ -9,7 +9,7 @@ type Transaction struct {
 	Hash        	string `orm:"pk"`
 	TimeStamp   	uint64
 	From        	string `orm:"index"`
-	To          	string `orm:"index"`
+	To          	*Account `orm:"rel(fk);null"`
 	Value       	string
 	GasLimit    	uint64
 	GasPrice    	string
@@ -86,6 +86,11 @@ func (t *Transaction) List(offset, limit int64, order, block string, account str
 
 	var txs []*Transaction
 	_, err := qs.All(&txs, fields...)
+	for _, tx := range txs {
+		if tx.To != nil && tx.To.Address != "" {
+			o.Read(tx.To)
+		}
+	}
 	return txs, err
 }
 
