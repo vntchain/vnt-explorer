@@ -54,6 +54,23 @@ func (this *NodeController) List() {
 
 }
 
+func (this *NodeController) Count() {
+	status, err := this.GetInt("status")
+	if err != nil {
+		beego.Warn("Failed to read status: ", err.Error())
+		status = common.DefaultNodeStatus
+	}
+
+	node := &models.Node{}
+
+	count, err := node.Count(status)
+	if err != nil {
+		this.ReturnErrorMsg("Failed to get node count: %s", err.Error())
+	} else {
+		this.ReturnData(count)
+	}
+}
+
 func (this *NodeController) Get() {
 	//beego.Info("params", this.Ctx.Input.Params())
 	address := this.Ctx.Input.Param(":address")

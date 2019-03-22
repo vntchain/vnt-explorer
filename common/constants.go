@@ -8,6 +8,7 @@ const (
 	DefaultHydrantInterval = 3600
 	DefaultGasLimit        = 90000
 	DefaultGasPrice        = 500000000000
+	DefaultNodeStatus      = -1
 )
 
 const (
