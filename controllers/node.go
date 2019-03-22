@@ -55,20 +55,39 @@ func (this *NodeController) List() {
 }
 
 func (this *NodeController) Count() {
-	status, err := this.GetInt("status")
-	if err != nil {
-		beego.Warn("Failed to read status: ", err.Error())
-		status = common.DefaultNodeStatus
-	}
+	//status, err := this.GetInt("status")
+	//if err != nil {
+	//	beego.Warn("Failed to read status: ", err.Error())
+	//	status = common.DefaultNodeStatus
+	//}
 
 	node := &models.Node{}
 
-	count, err := node.Count(status)
+	superCount, err := node.Count(1)
 	if err != nil {
 		this.ReturnErrorMsg("Failed to get node count: %s", err.Error())
-	} else {
-		this.ReturnData(count)
+		return
 	}
+
+	candiCount, err := node.Count(1)
+	if err != nil {
+		this.ReturnErrorMsg("Failed to get node count: %s", err.Error())
+		return
+	}
+
+	type Result struct {
+		Super	int64
+		Candi	int64
+		Total	int64
+	}
+
+	result := &Result{
+		superCount,
+		candiCount,
+		superCount + candiCount,
+	}
+
+	this.ReturnData(result)
 }
 
 func (this *NodeController) Get() {
