@@ -69,7 +69,7 @@ func (this *NodeController) Count() {
 		return
 	}
 
-	candiCount, err := node.Count(1)
+	candiCount, err := node.Count(0)
 	if err != nil {
 		this.ReturnErrorMsg("Failed to get node count: %s", err.Error())
 		return
