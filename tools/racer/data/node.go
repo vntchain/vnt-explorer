@@ -23,6 +23,7 @@ func GetNodes() []*models.Node {
 	}
 
 	nodeList := resp.Result.([]interface{})
+	totalVotes := big.NewInt(0);
 
 	beego.Info("Response body", resp)
 	var result []*models.Node
@@ -65,6 +66,8 @@ func GetNodes() []*models.Node {
 			ip = tmp[2]
 		}
 
+		totalVotes = totalVotes.Add(totalVotes, votes)
+
 		nodeValue := models.Node{
 			Address:         address,
 			Vname:           name,
@@ -72,11 +75,19 @@ func GetNodes() []*models.Node {
 			Ip:              ip,
 			Status:          status,
 			Votes:           votes.String(),
+			VotesFloat:		 float64(votes.Uint64()),
 			TotalBounty:     totalBounty.String(),
 			ExtractedBounty: extractedBounty.String(),
 			LastExtractTime: lastExtractTime.String(),
 		}
 		result = append(result, &nodeValue)
 	}
+
+	votesFloat := float64(totalVotes.Uint64())
+
+	for _, node := range result {
+		node.VotesPercent = float32(node.VotesFloat/votesFloat) * 100
+	}
+
 	return result
 }

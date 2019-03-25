@@ -12,6 +12,8 @@ type Node struct {
 	Ip              string
 	Status          int `orm:"index"`
 	Votes           string
+	VotesFloat      float64 `orm:"-"`
+	VotesPercent	float32
 	TotalBounty     string
 	ExtractedBounty string
 	LastExtractTime string
