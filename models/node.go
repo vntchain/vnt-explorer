@@ -10,6 +10,8 @@ type Node struct {
 	Home            string
 	Logo            string
 	Ip              string
+	IsSuper			int
+	IsAlive			int	`orm:"default(1)"`
 	Status          int `orm:"index"`
 	Votes           string
 	VotesFloat      float64 `orm:"-"`
@@ -38,6 +40,12 @@ func (n *Node) List(order string, offset, limit int, fields []string) ([]*Node, 
 		qs = qs.OrderBy("-Votes")
 	}
 
+	cond := orm.NewCondition()
+
+	cond = cond.And("status", 1)
+
+	qs = qs.SetCond(cond)
+
 	var nodes []*Node
 	_, err := qs.Offset(offset).Limit(limit).All(&nodes, fields...)
 	return nodes, err
@@ -50,15 +58,17 @@ func (n *Node) Get(address string) (*Node, error) {
 	return n, err
 }
 
-func (n *Node) Count(status int) (int64, error) {
+func (n *Node) Count(isSuper int) (int64, error) {
 	o := orm.NewOrm()
 
 	qs := o.QueryTable(n)
 
 	cond := orm.NewCondition()
 
-	if status == 0 || status == 1 {
-		cond = cond.And("status", status)
+	cond = cond.And("status", 1)
+
+	if isSuper != -1 {
+		cond = cond.And("isSuper", isSuper)
 	}
 
 	qs = qs.SetCond(cond)
