@@ -26,7 +26,7 @@ type Account struct {
 	TokenAcctCount string
 	FirstBlock     uint64
 	LastBlock      uint64
-	Percent 	   float32	 `orm:"-"`
+	Percent 	   float32
 }
 
 func (a *Account) Insert() error {

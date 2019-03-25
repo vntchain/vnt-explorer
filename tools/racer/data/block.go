@@ -11,6 +11,7 @@ import (
 	"github.com/vntchain/vnt-explorer/common/utils"
 	"github.com/vntchain/vnt-explorer/models"
 	"github.com/vntchain/vnt-explorer/tools/racer/token"
+	"strconv"
 )
 
 var acctCache = gcache.New(10000).LRU().Build()
@@ -264,6 +265,21 @@ func GetBalance(addr string, blockNumber uint64) string {
 	return balance
 }
 
+func GetBalancePercent(balance string) float32 {
+	if len(balance) < 18 {
+		return 0
+	}
+
+	balance = balance[:len(balance)-18]
+	b, err := strconv.ParseFloat(balance, 64)
+	if err != nil {
+		msg := fmt.Sprintf("failed to parse balance: %s", err.Error())
+		beego.Error(msg)
+		panic(msg)
+	}
+	return float32(b/common.VNT_TOTAL)
+}
+
 func IsToken(addr string, tx *models.Transaction) (bool, *token.Erc20) {
 	totalSupply := token.GetTotalSupply(addr, tx.BlockNumber)
 	tokenName := token.GetTokenName(addr, tx.BlockNumber)
@@ -331,12 +347,14 @@ func NewAccount(addr string, tx *models.Transaction, _type int, txCount uint64) 
 	}
 
 	a.Balance = GetBalance(addr, tx.BlockNumber)
+	a.Percent = GetBalancePercent(a.Balance)
 	insertAcc(addr, a)
 }
 
 func UpdateAccount(account *models.Account, tx *models.Transaction, _type int) {
 
 	account.Balance = GetBalance(account.Address, tx.BlockNumber)
+	account.Percent = GetBalancePercent(account.Balance)
 	account.LastBlock = tx.BlockNumber
 
 	if account.LastTx != tx.Hash {
@@ -373,6 +391,7 @@ func UpdateAccount(account *models.Account, tx *models.Transaction, _type int) {
 	for _, a := range retAddrs {
 		if acct := GetAccount(a); acct != nil {
 			acct.Balance = GetBalance(a, tx.BlockNumber)
+			acct.Percent = GetBalancePercent(acct.Balance)
 			acct.LastBlock = tx.BlockNumber
 			if acct.LastTx != tx.Hash {
 				acct.LastTx = tx.Hash
@@ -391,6 +410,7 @@ func PersistWitnesses(accts []string, blockNumber uint64) {
 	for _, a := range accts {
 		if acct := GetAccount(a); acct != nil {
 			acct.Balance = GetBalance(a, blockNumber)
+			acct.Percent = GetBalancePercent(acct.Balance)
 			acct.LastBlock = blockNumber
 			updateAcc(a, acct)
 		} else {
