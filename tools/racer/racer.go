@@ -8,6 +8,7 @@ import (
 	"github.com/astaxie/beego"
 	"github.com/vntchain/vnt-explorer/tools/racer/data"
 	"github.com/vntchain/vnt-explorer/models"
+	"strings"
 )
 
 func main() {
@@ -44,9 +45,10 @@ func doSync() {
 	rmtHgt, localHgt, lastBlock := checkHeight()
 
 	// localHgt = 14
-	//rmtHgt = 2000
+	//rmtHgt = 25913
 	beego.Info(fmt.Sprintf("Local height: %d, rmtHeight: %d", localHgt, rmtHgt))
 	if localHgt >= rmtHgt {
+		beego.Info("here!")
 		time.Sleep(2 * time.Second)
 		return
 	}
@@ -56,7 +58,7 @@ func doSync() {
 	var leftAddrs []string
 
 	// Set the block sync batch to 1000
-	if localHgt < rmtHgt {
+	if rmtHgt - localHgt > 1000 {
 		rmtHgt = localHgt + 1000
 	}
 
@@ -130,12 +132,14 @@ func doSync() {
 	}
 
 	witMap := make(map[string]int)
+	//fmt.Println("witnesses: %v", leftAddrs)
 	for _, addr := range leftAddrs {
-		witMap[addr] = 1
+		witMap[strings.ToLower(addr)] = 1
 	}
 
 	nodes := data.GetNodes()
 	for _, node := range nodes {
+		//fmt.Println("node address: %s", node.Address)
 		if witMap[node.Address] == 1 {
 			node.IsSuper = 1
 		} else {

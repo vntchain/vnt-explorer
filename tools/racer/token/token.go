@@ -13,6 +13,7 @@ import (
 	"github.com/vntchain/vnt-explorer/common/utils"
 	"github.com/astaxie/beego/orm"
 	"strconv"
+	"strings"
 )
 
 var transferSig = map[string]string {
@@ -142,7 +143,7 @@ func GetTransferAddrs(tx *models.Transaction) (addrs []string) {
 			panic(msg)
 		}
 
-		addrs = append(addrs, tx.From, _input.To.String())
+		addrs = append(addrs, tx.From, strings.ToLower(_input.To.String()))
 
 		tx.TokenFrom = tx.From
 		tx.TokenTo = _input.To.String()
@@ -163,7 +164,7 @@ func GetTransferAddrs(tx *models.Transaction) (addrs []string) {
 			panic(msg)
 		}
 
-		addrs = append(addrs, tx.From, _input.From.String(), _input.To.String())
+		addrs = append(addrs, tx.From, strings.ToLower(_input.From.String()), strings.ToLower(_input.To.String()))
 
 		tx.TokenFrom = _input.From.String()
 		tx.TokenTo = _input.To.String()

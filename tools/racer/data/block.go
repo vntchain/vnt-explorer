@@ -112,7 +112,7 @@ func GetBlock(number int64) (*models.Block, []interface{}, []interface{}) {
 		TimeStamp:  timestamp,
 		Hash:       blockMap["hash"].(string),
 		ParentHash: blockMap["parentHash"].(string),
-		Producer:   blockMap["producer"].(string),
+		Producer:   strings.ToLower(blockMap["producer"].(string)),
 		Size:       fmt.Sprintf("%d", size),
 		GasUsed:    gasUsed,
 		GasLimit:   gasLimit,
@@ -160,7 +160,7 @@ func GetTx(txHash string) *models.Transaction {
 
 	tx := &models.Transaction{
 		Hash:        txMap["hash"].(string),
-		From:        txMap["from"].(string),
+		From:        strings.ToLower(txMap["from"].(string)),
 		Value:       utils.Hex(txMap["value"].(string)).ToString(),
 		GasLimit:    utils.Hex(txMap["gas"].(string)).ToUint64(),
 		GasPrice:    utils.Hex(txMap["gasPrice"].(string)).ToString(),
@@ -183,7 +183,7 @@ func GetTx(txHash string) *models.Transaction {
 		}
 		tx.To = nil
 	} else {
-		tx.To = &models.Account{Address: to}
+		tx.To = &models.Account{Address: strings.ToLower(to)}
 	}
 
 	return tx

@@ -69,7 +69,7 @@ func GetNodes() []*models.Node {
 		totalVotes = totalVotes.Add(totalVotes, votes)
 
 		nodeValue := models.Node{
-			Address:         address,
+			Address:         strings.ToLower(address),
 			Vname:           name,
 			Home:            website,
 			Ip:              ip,
@@ -79,6 +79,7 @@ func GetNodes() []*models.Node {
 			TotalBounty:     totalBounty.String(),
 			ExtractedBounty: extractedBounty.String(),
 			LastExtractTime: lastExtractTime.String(),
+			IsAlive: 1,
 		}
 		result = append(result, &nodeValue)
 	}
