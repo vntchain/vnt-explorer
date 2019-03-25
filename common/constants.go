@@ -9,7 +9,8 @@ const (
 	DefaultGasLimit        = 90000
 	DefaultGasPrice        = 500000000000
 	DefaultNodeStatus      = -1
-	VNT_TOTAL float64	   = 10000000000
+	VNT_TOTAL string	   = "10000000000000000000000000000"
+	VNT_DECIMAL int	   	   = 18
 )
 
 const (

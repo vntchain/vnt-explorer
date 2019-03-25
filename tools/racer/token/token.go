@@ -71,6 +71,7 @@ func UpdateTokenBalance(token *models.Account, tx *models.Transaction) []string 
 			tokenBalance, err := tokenBalance.GetByAddr(addr, token.Address)
 			if err != nil && err == orm.ErrNoRows {
 				tokenBalance.Balance = GetAmount(token.Address, addr, tx.BlockNumber)
+				tokenBalance.Percent = utils.GetBalancePercent(tokenBalance.Balance, token.TokenAmount, int(token.TokenDecimals))
 				 if err = tokenBalance.Insert(); err != nil {
 				 	msg := fmt.Sprintf("Failed to insert token balance, token:%s, address:%s, balance:%s",
 				 		tokenBalance.Token, tokenBalance.Account, tokenBalance.Balance)
@@ -96,6 +97,7 @@ func UpdateTokenBalance(token *models.Account, tx *models.Transaction) []string 
 				panic(msg)
 			} else if tokenBalance.Id > 0 {
 				tokenBalance.Balance = GetAmount(token.Address, addr, tx.BlockNumber)
+				tokenBalance.Percent = utils.GetBalancePercent(tokenBalance.Balance, token.TokenAmount, int(token.TokenDecimals))
 				if err := tokenBalance.Update(); err != nil {
 					msg := fmt.Sprintf("Failed to update token balance, token:%s, address:%s, token:%s",
 						tokenBalance.Token, tokenBalance.Account, tokenBalance.Account)
