@@ -44,21 +44,21 @@ func GetLocalHeight() (int64, *models.Block) {
 		panic(msg)
 	}
 
-	var bNumber uint64
+	var bNumber int64
 
 	if block == nil {
-		bNumber = 0
+		bNumber = -1
 	} else {
-		bNumber = block.Number
+		bNumber = int64(block.Number)
 	}
 
-	if bNumber != uint64(count) {
-		msg := fmt.Sprintf("Block data in db not matched! count %d not equal to lastest block number %d, please check you local database.", count, bNumber)
+	if bNumber + 1 != count {
+		msg := fmt.Sprintf("Block data in db not matched! count %d not match lastest block number %d, please check you local database.", count, bNumber)
 		beego.Error(msg)
 		panic(msg)
 	}
 
-	return count, block
+	return count-1, block
 }
 
 func GetRemoteHeight() int64 {
@@ -84,6 +84,10 @@ func GetBlock(number int64) (*models.Block, []interface{}, []interface{}) {
 	hex := utils.Encode(big.NewInt(number).Bytes())
 	if strings.HasPrefix(hex, "0x0") {
 		hex = "0x" + hex[3:]
+	}
+
+	if hex == "0x" {
+		hex = "0x0"
 	}
 
 	rpc.Params = append(rpc.Params, hex, false)
