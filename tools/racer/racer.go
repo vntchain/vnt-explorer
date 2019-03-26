@@ -185,5 +185,11 @@ func registerElectionContract() {
 			msg := fmt.Sprintf("Failed to insert election contract account: %s", err.Error())
 			panic(msg)
 		}
+	}else if election.ContractName==""{
+		election.ContractName = "election"
+		if err = election.Update(); err != nil {
+			msg := fmt.Sprintf("Failed to update election contract account: %s", err.Error())
+			panic(msg)
+		}
 	}
 }
