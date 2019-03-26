@@ -78,4 +78,9 @@ GET /v1/blocks
 
 该模块会连接go-vnt节点，并将数据同步到mysql数据库中
 
-`go tools/racer/racer.go`
+```
+# 初始化数据库表
+go run tools/dbsync/sync.go
+# 同步数据
+go run tools/racer/racer.go
+```

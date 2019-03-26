@@ -109,7 +109,7 @@ func (this *HydrantController) SendVnt() {
 	rpc.Method = common.Rpc_SendRawTransaction
 	rpc.Params = append(rpc.Params, dataStr)
 
-	err, resp := utils.CallRpc(rpc)
+	err, resp, _ := utils.CallRpc(rpc)
 	if err != nil {
 		this.ReturnErrorMsg("System error. Please contract developers.", err.Error())
 		return
@@ -157,7 +157,7 @@ func getNonce(addr string) (uint64, error) {
 	rpc.Method = common.Rpc_GetTransactionCount
 	rpc.Params = append(rpc.Params, addr)
 	rpc.Params = append(rpc.Params, "latest")
-	err, resp := utils.CallRpc(rpc)
+	err, resp, _ := utils.CallRpc(rpc)
 	if err != nil {
 		return 0, err
 	}

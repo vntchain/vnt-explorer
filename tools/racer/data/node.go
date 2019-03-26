@@ -14,7 +14,7 @@ func GetNodes() []*models.Node {
 	rpc := common.NewRpc()
 	rpc.Method = common.Rpc_GetAllCandidates
 
-	err, resp := utils.CallRpc(rpc)
+	err, resp, _ := utils.CallRpc(rpc)
 	if err != nil {
 		if err.Error() != "Rpc returned with error: code: -32000, error: empty witness candidates list" {
 			beego.Error("Get Node error: ", err)

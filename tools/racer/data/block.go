@@ -65,7 +65,7 @@ func GetRemoteHeight() int64 {
 	rpc := common.NewRpc()
 	rpc.Method = common.Rpc_BlockNumber
 
-	err, resp := utils.CallRpc(rpc)
+	err, resp, _ := utils.CallRpc(rpc)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -92,7 +92,7 @@ func GetBlock(number int64) (*models.Block, []interface{}, []interface{}) {
 
 	rpc.Params = append(rpc.Params, hex, false)
 
-	err, resp := utils.CallRpc(rpc)
+	err, resp, _ := utils.CallRpc(rpc)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -144,7 +144,7 @@ func GetTx(txHash string) *models.Transaction {
 
 	rpc.Params = append(rpc.Params, txHash)
 
-	err, resp := utils.CallRpc(rpc)
+	err, resp, _ := utils.CallRpc(rpc)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -154,7 +154,7 @@ func GetTx(txHash string) *models.Transaction {
 
 	rpc.Method = common.Rpc_GetTxReceipt
 
-	err, resp = utils.CallRpc(rpc)
+	err, resp, _ = utils.CallRpc(rpc)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -259,9 +259,11 @@ func GetBalance(addr string, blockNumber uint64) string {
 	rpc.Params = append(rpc.Params, addr)
 	rpc.Params = append(rpc.Params, utils.EncodeUint64(blockNumber))
 
-	err, resp := utils.CallRpc(rpc)
-	if err != nil {
+	err, resp, rpcError := utils.CallRpc(rpc)
+	if err != nil && rpcError == nil {
 		panic(err.Error())
+	} else if rpcError.Code == -32000 {
+		return "0"
 	}
 
 	balance := utils.Hex(resp.Result.(string)).ToString()
@@ -269,10 +271,10 @@ func GetBalance(addr string, blockNumber uint64) string {
 }
 
 func IsToken(addr string, tx *models.Transaction) (bool, *token.Erc20) {
-	totalSupply := token.GetTotalSupply(addr, tx.BlockNumber)
-	tokenName := token.GetTokenName(addr, tx.BlockNumber)
-	decimals := token.GetDecimals(addr, tx.BlockNumber)
-	symbol := token.GetSymbol(addr, tx.BlockNumber)
+	totalSupply := token.GetTotalSupply(addr)
+	tokenName := token.GetTokenName(addr)
+	decimals := token.GetDecimals(addr)
+	symbol := token.GetSymbol(addr)
 
 	if totalSupply != nil && decimals != nil && symbol != "" && tokenName != "" {
 		erc20 := &token.Erc20{
