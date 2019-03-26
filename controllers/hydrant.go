@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
-	"strconv"
 	"strings"
 	"time"
 
@@ -81,7 +80,9 @@ func (this *HydrantController) SendVnt() {
 	if hydrant != nil {
 		// check interval
 		if now-hydrant.TimeStamp < int64(hydrantInterval) {
-			this.ReturnErrorMsg("Too Frequently: the last time sent vnt to you is %s", strconv.FormatInt(hydrant.TimeStamp, 10))
+			lastTime := time.Unix(hydrant.TimeStamp, 0)
+			this.ReturnErrorMsg("Too Frequently: the last time sent vnt to you is %s", lastTime.Format("2006-01-02 15:04:05"))
+
 			return
 		}
 	}
