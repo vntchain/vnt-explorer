@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/astaxie/beego"
-	"github.com/vntchain/vnt-explorer/tools/racer/data"
 	"github.com/vntchain/vnt-explorer/models"
+	"github.com/vntchain/vnt-explorer/tools/racer/data"
 	"strings"
 )
 
@@ -28,6 +28,7 @@ func main() {
 	//ta, err := tb.GetByAddr("hello", "there")
 	//beego.Info(ta, err == orm.ErrNoRows)
 	//return
+	registerElectionContract()
 
 	for {
 		doSync()
@@ -58,7 +59,7 @@ func doSync() {
 	var leftAddrs []string
 
 	// Set the block sync batch to 1000
-	if rmtHgt - localHgt > 1000 {
+	if rmtHgt-localHgt > 1000 {
 		rmtHgt = localHgt + 1000
 	}
 
@@ -164,4 +165,31 @@ func checkHeight() (int64, int64, *models.Block) {
 	}
 
 	return rmtHgt, localHgt, lastBlock
+}
+
+func registerElectionContract() {
+	electionAddr := "0x0000000000000000000000000000000000000009"
+	election := &models.Account{}
+	election, err := election.Get(electionAddr)
+	if err != nil {
+		election = &models.Account{
+			Address:        electionAddr,
+			Balance:        "0",
+			TxCount:        0,
+			IsContract:     true,
+			ContractName:   "election",
+			TokenAcctCount: "0",
+			TokenAmount:    "0",
+		}
+		if err = election.Insert(); err != nil {
+			msg := fmt.Sprintf("Failed to insert election contract account: %s", err.Error())
+			panic(msg)
+		}
+	}else if election.ContractName==""{
+		election.ContractName = "election"
+		if err = election.Update(); err != nil {
+			msg := fmt.Sprintf("Failed to update election contract account: %s", err.Error())
+			panic(msg)
+		}
+	}
 }

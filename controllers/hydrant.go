@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
-	"strconv"
 	"strings"
 	"time"
 
@@ -69,6 +68,10 @@ func (this *HydrantController) SendVnt() {
 		this.ReturnErrorMsg("Wrong format of Address: %s", err.Error())
 		return
 	}
+	if !isHex(addr.Address) {
+		this.ReturnErrorMsg("Wrong format of Address: %s, it must be 0x[0-9|a-z|A-Z]* or [0-9|a-z|A-Z]*", addr.Address)
+		return
+	}
 	address := vntCommon.HexToAddress(addr.Address)
 
 	// get account from hydrant db
@@ -77,7 +80,9 @@ func (this *HydrantController) SendVnt() {
 	if hydrant != nil {
 		// check interval
 		if now-hydrant.TimeStamp < int64(hydrantInterval) {
-			this.ReturnErrorMsg("Too Frequently: the last time sent vnt to you is %s", strconv.FormatInt(hydrant.TimeStamp, 10))
+			lastTime := time.Unix(hydrant.TimeStamp, 0)
+			this.ReturnErrorMsg("Too Frequently: the last time sent vnt to you is %s", lastTime.Format("2006-01-02 15:04:05"))
+
 			return
 		}
 	}
@@ -89,7 +94,7 @@ func (this *HydrantController) SendVnt() {
 	// get nonce
 	nonce, err := getNonce(hydrantFrom)
 	if err != nil {
-		this.ReturnErrorMsg("System error. Please contract developers.", err.Error())
+		this.ReturnErrorMsg("System error: %s. Please contract developers.", err.Error())
 		return
 	}
 
@@ -99,7 +104,7 @@ func (this *HydrantController) SendVnt() {
 	transaction, err := vntTypes.SignTx(tx, vntTypes.HomesteadSigner{}, prv)
 	data, err := vntRlp.EncodeToBytes(transaction)
 	if err != nil {
-		this.ReturnErrorMsg("System error. Please contract developers.", err.Error())
+		this.ReturnErrorMsg("System error: %s. Please contract developers.", err.Error())
 		return
 	}
 	dataStr := fmt.Sprintf("0x%x", data)
@@ -111,13 +116,14 @@ func (this *HydrantController) SendVnt() {
 
 	err, resp, _ := utils.CallRpc(rpc)
 	if err != nil {
-		this.ReturnErrorMsg("System error. Please contract developers.", err.Error())
+		this.ReturnErrorMsg("System error: %s. Please contract developers.", err.Error())
 		return
 	}
 
+	// TODO check transaction status
+	txHash := resp.Result.(string)
 	updateHydrant(address.String(), hydrant)
-	this.ReturnData(resp)
-
+	this.ReturnData(txHash)
 }
 
 // get data from cache or db
@@ -163,4 +169,27 @@ func getNonce(addr string) (uint64, error) {
 	}
 	nonce := utils.Hex(resp.Result.(string)).ToUint64()
 	return nonce, nil
+}
+
+// isHexCharacter returns bool of c being a valid hexadecimal.
+func isHexCharacter(c byte) bool {
+	return ('0' <= c && c <= '9') || ('a' <= c && c <= 'f') || ('A' <= c && c <= 'F')
+}
+
+// hasHexPrefix validates str begins with '0x' or '0X'.
+func hasHexPrefix(str string) bool {
+	return len(str) >= 2 && str[0] == '0' && (str[1] == 'x' || str[1] == 'X')
+}
+
+// isHex validates whether each byte is valid hexadecimal string.
+func isHex(str string) bool {
+	if hasHexPrefix(str) {
+		str = str[2:]
+	}
+	for _, c := range []byte(str) {
+		if !isHexCharacter(c) {
+			return false
+		}
+	}
+	return true
 }
