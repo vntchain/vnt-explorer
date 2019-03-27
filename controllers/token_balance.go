@@ -24,7 +24,7 @@ func (this *TokenBalanceController) Post() {
 	if err != nil {
 		this.ReturnErrorMsg("Failed to create TokenBalance: %s", err.Error())
 	} else {
-		this.ReturnData(tokenBalance)
+		this.ReturnData(tokenBalance, nil)
 	}
 }
 
@@ -50,7 +50,13 @@ func (this *TokenBalanceController) ListByToken() {
 	if err != nil {
 		this.ReturnErrorMsg("Failed to list TokenBalance: %s", err.Error())
 	} else {
-		this.ReturnData(dbItemList)
+		count := make(map[string]int64)
+		count["count"], err = tokenBalance.Count("", tokenAddress)
+		if err != nil {
+			this.ReturnErrorMsg("Failed to list TokenBalance: %s", err.Error())
+			return
+		}
+		this.ReturnData(dbItemList, count)
 	}
 }
 
@@ -76,7 +82,13 @@ func (this *TokenBalanceController) ListByAccount() {
 	if err != nil {
 		this.ReturnErrorMsg("Failed to list TokenBalance: %s", err.Error())
 	} else {
-		this.ReturnData(dbItemList)
+		count := make(map[string]int64)
+		count["count"], err = tokenBalance.Count(account, "")
+		if err != nil {
+			this.ReturnErrorMsg("Failed to list TokenBalance: %s", err.Error())
+			return
+		}
+		this.ReturnData(dbItemList, count)
 	}
 
 }
@@ -89,7 +101,7 @@ func (this *TokenBalanceController) TokenCount() {
 	if err != nil {
 		this.ReturnErrorMsg("Failed to get account token count: %s", err.Error())
 	} else {
-		this.ReturnData(count)
+		this.ReturnData(count, nil)
 	}
 }
 
@@ -101,6 +113,6 @@ func (this *TokenBalanceController) HolderCount() {
 	if err != nil {
 		this.ReturnErrorMsg("Failed to get account token count: %s", err.Error())
 	} else {
-		this.ReturnData(count)
+		this.ReturnData(count, nil)
 	}
 }

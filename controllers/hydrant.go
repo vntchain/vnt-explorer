@@ -123,7 +123,7 @@ func (this *HydrantController) SendVnt() {
 	// TODO check transaction status
 	txHash := resp.Result.(string)
 	updateHydrant(address.String(), hydrant)
-	this.ReturnData(txHash)
+	this.ReturnData(txHash, nil)
 }
 
 // get data from cache or db

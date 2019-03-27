@@ -69,5 +69,5 @@ func (this *NetController) Stats() {
 		candiNode,
 	}
 
-	this.ReturnData(stats)
+	this.ReturnData(stats, nil)
 }

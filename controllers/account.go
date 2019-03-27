@@ -24,7 +24,7 @@ func (this *AccountController) Post() {
 	if err != nil {
 		this.ReturnErrorMsg("Failed to create Account: %s", err.Error())
 	} else {
-		this.ReturnData(account)
+		this.ReturnData(account, nil)
 	}
 }
 
@@ -66,7 +66,13 @@ func (this *AccountController) List() {
 	if err != nil {
 		this.ReturnErrorMsg("Failed to list accounts: %s", err.Error())
 	} else {
-		this.ReturnData(accounts)
+		count := make(map[string]int64)
+		count["count"], err = account.Count(isContract, isToken)
+		if err != nil {
+			this.ReturnErrorMsg("Failed to list accounts: %s", err.Error())
+			return
+		}
+		this.ReturnData(accounts, count)
 	}
 
 }
@@ -86,7 +92,7 @@ func (this *AccountController) Get() {
 	if err != nil {
 		this.ReturnErrorMsg("Failed to read account: %s", err.Error())
 	} else {
-		this.ReturnData(dbaccount)
+		this.ReturnData(dbaccount, nil)
 	}
 }
 
@@ -98,6 +104,6 @@ func (this *AccountController) Count() {
 	if err != nil {
 		this.ReturnErrorMsg("Failed to get accounts count: %s", err.Error())
 	} else {
-		this.ReturnData(count)
+		this.ReturnData(count, nil)
 	}
 }

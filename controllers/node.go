@@ -24,7 +24,7 @@ func (this *NodeController) Post() {
 	if err != nil {
 		this.ReturnErrorMsg("Failed to create Node: %s", err.Error())
 	} else {
-		this.ReturnData(node)
+		this.ReturnData(node, nil)
 	}
 }
 
@@ -49,7 +49,13 @@ func (this *NodeController) List() {
 	if err != nil {
 		this.ReturnErrorMsg("Failed to list nodes: %s", err.Error())
 	} else {
-		this.ReturnData(nodes)
+		count := make(map[string]int64)
+		count["count"], err = node.Count(-1)
+		if err != nil {
+			this.ReturnErrorMsg("Failed to list nodes: %s", err.Error())
+			return
+		}
+		this.ReturnData(nodes, count)
 	}
 
 }
@@ -87,7 +93,7 @@ func (this *NodeController) Count() {
 		superCount + candiCount,
 	}
 
-	this.ReturnData(result)
+	this.ReturnData(result, nil)
 }
 
 func (this *NodeController) Get() {
@@ -103,6 +109,6 @@ func (this *NodeController) Get() {
 	if err != nil {
 		this.ReturnErrorMsg("Failed to read node: %s", err.Error())
 	} else {
-		this.ReturnData(dbItem)
+		this.ReturnData(dbItem, nil)
 	}
 }

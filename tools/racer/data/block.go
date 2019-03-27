@@ -320,7 +320,7 @@ func NewAccount(addr string, tx *models.Transaction, _type int, txCount uint64) 
 		a.ContractName = "" // TODO: extract contract name from contract code
 		a.ContractOwner = tx.From
 
-		beego.Info("######### a.ContractOwner:", a.ContractOwner)
+		//beego.Info("######### a.ContractOwner:", a.ContractOwner)
 
 		if ok, erc20 := IsToken(addr, tx); ok {
 			a.IsToken = true

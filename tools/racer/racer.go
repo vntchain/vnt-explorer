@@ -36,12 +36,12 @@ func main() {
 }
 
 func doSync() {
-	//defer func() {
-	//	if r := recover(); r != nil {
-	//		beego.Error("Error happened:", r)
-	//		time.Sleep(2 * time.Second)
-	//	}
-	//}()
+	defer func() {
+		if r := recover(); r != nil {
+			beego.Error("Error happened:", r)
+			time.Sleep(2 * time.Second)
+		}
+	}()
 
 	rmtHgt, localHgt, lastBlock := checkHeight()
 

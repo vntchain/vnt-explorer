@@ -28,7 +28,7 @@ func (this *TransactionController) Post() {
 	if err != nil {
 		this.ReturnErrorMsg("Failed to create transaction: %s", err.Error())
 	} else {
-		this.ReturnData(tx)
+		this.ReturnData(tx, nil)
 	}
 }
 
@@ -64,7 +64,13 @@ func (this *TransactionController) List() {
 	if err != nil {
 		this.ReturnErrorMsg("Failed to list transactions: ", err.Error())
 	} else {
-		this.ReturnData(txs)
+		count := make(map[string]int64)
+		count["count"], err = tx.Count(block, account, isToken, -1, -1)
+		if err != nil {
+			this.ReturnErrorMsg("Failed to list TokenBalance: %s", err.Error())
+			return
+		}
+		this.ReturnData(txs, count)
 	}
 }
 
@@ -84,7 +90,7 @@ func (this *TransactionController) Get() {
 	if err != nil {
 		this.ReturnErrorMsg("Failed to read transaction: %s", err.Error())
 	} else {
-		this.ReturnData(dbTx)
+		this.ReturnData(dbTx, nil)
 	}
 }
 
@@ -104,7 +110,7 @@ func (this *TransactionController) Count() {
 	if err != nil {
 		this.ReturnErrorMsg("Failed to count transactions: ", err.Error())
 	} else {
-		this.ReturnData(count)
+		this.ReturnData(count, nil)
 	}
 }
 
@@ -172,5 +178,5 @@ func (this *TransactionController) History() {
 		start = right
 	}
 
-	this.ReturnData(history)
+	this.ReturnData(history, nil)
 }

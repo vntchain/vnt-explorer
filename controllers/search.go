@@ -56,6 +56,6 @@ func (this *SearchController) Search() {
 	if err != nil {
 		this.ReturnErrorMsg("Error happend: %s", err.Error())
 	} else {
-		this.ReturnData(sBody)
+		this.ReturnData(sBody, nil)
 	}
 }
