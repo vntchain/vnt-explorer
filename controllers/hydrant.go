@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"math/big"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/astaxie/beego"
-	"github.com/bluele/gcache"
 	vntCommon "github.com/vntchain/go-vnt/common"
 	vntTypes "github.com/vntchain/go-vnt/core/types"
 	vntCrypto "github.com/vntchain/go-vnt/crypto"
@@ -24,10 +24,11 @@ var (
 	hydrantCount, countErr       = beego.AppConfig.Int("hydrant::count")
 	hydrantFrom                  = beego.AppConfig.String("hydrant::from")
 	hydrantPrivteKey             = beego.AppConfig.String("hydrant::privateKey")
-	hydrantCache                 = gcache.New(10000).LRU().Build()
+	addrMap                      = make(map[string]interface{})
 )
 
 var prv *ecdsa.PrivateKey
+var mutex sync.Mutex
 
 type HydrantController struct {
 	BaseController
@@ -69,10 +70,20 @@ func (this *HydrantController) SendVnt() {
 		return
 	}
 	if !isHex(addr.Address) {
-		this.ReturnErrorMsg("Wrong format of Address: %s, it must be 0x[0-9|a-z|A-Z]* or [0-9|a-z|A-Z]*", addr.Address)
+		this.ReturnErrorMsg("Wrong format of Address: %s, it must be 0x[0-9|a-f|A-F]* or [0-9|a-f|A-F]*", addr.Address)
 		return
 	}
 	address := vntCommon.HexToAddress(addr.Address)
+
+	// 如果有交易正在向该账户发送vnt，则返回
+	mutex.Lock()
+	if _, exists := addrMap[address.String()]; exists {
+		defer mutex.Unlock()
+		this.ReturnErrorMsg("Sending vnt to %s! Please wait for a moment! ", addr.Address)
+		return
+	}
+	addrMap[address.String()] = nil
+	mutex.Unlock()
 
 	// get account from hydrant db
 	hydrant := getHydrant(address.String())
@@ -82,7 +93,7 @@ func (this *HydrantController) SendVnt() {
 		if now-hydrant.TimeStamp < int64(hydrantInterval) {
 			lastTime := time.Unix(hydrant.TimeStamp, 0)
 			this.ReturnErrorMsg("Too Frequently: the last time sent vnt to you is %s", lastTime.Format("2006-01-02 15:04:05"))
-
+			deleteAddrMap(address.String())
 			return
 		}
 	}
@@ -94,17 +105,19 @@ func (this *HydrantController) SendVnt() {
 	// get nonce
 	nonce, err := getNonce(hydrantFrom)
 	if err != nil {
-		this.ReturnErrorMsg("System error: %s. Please contract developers.", err.Error())
+		this.ReturnErrorMsg("System error, get nonce: %s. Please contract developers.", err.Error())
+		deleteAddrMap(address.String())
 		return
 	}
 
 	// build transaction
 	amount := big.NewInt(1).Mul(big.NewInt(int64(hydrantCount)), big.NewInt(1e18))
 	tx := vntTypes.NewTransaction(nonce, address, amount, common.DefaultGasLimit, big.NewInt(common.DefaultGasPrice), nil)
-	transaction, err := vntTypes.SignTx(tx, vntTypes.HomesteadSigner{}, prv)
+	transaction, err := vntTypes.SignTx(tx, vntTypes.NewHubbleSigner(big.NewInt(1333)), prv)
 	data, err := vntRlp.EncodeToBytes(transaction)
 	if err != nil {
-		this.ReturnErrorMsg("System error: %s. Please contract developers.", err.Error())
+		this.ReturnErrorMsg("System error, signTx: %s. Please contract developers.", err.Error())
+		deleteAddrMap(address.String())
 		return
 	}
 	dataStr := fmt.Sprintf("0x%x", data)
@@ -116,34 +129,26 @@ func (this *HydrantController) SendVnt() {
 
 	err, resp, _ := utils.CallRpc(rpc)
 	if err != nil {
-		this.ReturnErrorMsg("System error: %s. Please contract developers.", err.Error())
+		this.ReturnErrorMsg("System error, sendRawTransaction %s. Please contract developers.", err.Error())
+		deleteAddrMap(address.String())
 		return
 	}
 
-	// TODO check transaction status
 	txHash := resp.Result.(string)
-	updateHydrant(address.String(), hydrant)
+	// check transaction status
+	go checkTxReceipt(txHash, address.String(), hydrant)
 	this.ReturnData(txHash, nil)
 }
 
 // get data from cache or db
 func getHydrant(addr string) *models.Hydrant {
 	addr = strings.ToLower(addr)
-	if _type, err := hydrantCache.Get(addr); err == nil && _type != nil {
-		beego.Info("Address hit in cache:", addr)
-		return _type.(*models.Hydrant)
-	} else {
-		beego.Info("Address not hit in cache:", addr)
-		a := &models.Hydrant{}
-		a, err := a.Get(addr)
-		if err != nil {
-			beego.Info("Address not hit in db:", addr)
-			return nil
-		}
-		beego.Info("Address hit in db:", addr)
-		hydrantCache.Set(addr, a)
-		return a
+	a := &models.Hydrant{}
+	a, err := a.Get(addr)
+	if err != nil {
+		return nil
 	}
+	return a
 }
 
 // update db and cache
@@ -154,7 +159,6 @@ func updateHydrant(addr string, hydrant *models.Hydrant) {
 		beego.Error(msg)
 		panic(err)
 	}
-	hydrantCache.Set(addr, hydrant)
 }
 
 func getNonce(addr string) (uint64, error) {
@@ -192,4 +196,34 @@ func isHex(str string) bool {
 		}
 	}
 	return true
+}
+
+func checkTxReceipt(txHash string, addr string, hydrant *models.Hydrant) bool {
+	defer deleteAddrMap(addr)
+	// query 20 times at most
+	for i := 0; i < 20; i++ {
+		rpc := common.NewRpc()
+		rpc.Method = common.Rpc_GetTxReceipt
+		rpc.Params = append(rpc.Params, txHash)
+		err, resp, _ := utils.CallRpc(rpc)
+		if err != nil || resp.Result == nil {
+			time.Sleep(time.Second)
+			continue
+		}
+
+		receiptMap := resp.Result.(map[string]interface{})
+		if utils.Hex(receiptMap["status"].(string)).ToUint64() == 1 {
+			updateHydrant(addr, hydrant)
+			return true
+		} else {
+			return false
+		}
+	}
+	return false
+}
+
+func deleteAddrMap(addr string) {
+	mutex.Lock()
+	delete(addrMap, addr)
+	mutex.Unlock()
 }
