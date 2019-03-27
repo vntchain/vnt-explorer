@@ -6,6 +6,7 @@ import (
 	"strings"
 	"strconv"
 	"fmt"
+	"errors"
 )
 
 type Block struct {
@@ -59,6 +60,7 @@ func (b *Block) Get(nOrh string, fields ...string) (*Block, error) {
 		if err != nil {
 			msg := fmt.Sprintf("Wrong block number: %s", nOrh)
 			beego.Error(msg)
+			return nil, errors.New(msg)
 		}
 		err = o.Read(b, "Number")
 	}

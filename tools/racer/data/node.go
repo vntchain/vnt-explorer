@@ -86,9 +86,10 @@ func GetNodes() []*models.Node {
 
 	votesFloat := float64(totalVotes.Uint64())
 
-	for _, node := range result {
-		node.VotesPercent = float32(node.VotesFloat/votesFloat) * 100
+	if votesFloat > 0 {
+		for _, node := range result {
+			node.VotesPercent = float32(node.VotesFloat/votesFloat) * 100
+		}
 	}
-
 	return result
 }
