@@ -24,6 +24,7 @@ var (
 	hydrantCount, countErr       = beego.AppConfig.Int("hydrant::count")
 	hydrantFrom                  = beego.AppConfig.String("hydrant::from")
 	hydrantPrivteKey             = beego.AppConfig.String("hydrant::privateKey")
+	hydrantChainId, chainIdErr   = beego.AppConfig.Int("hydrant:chainId")
 	addrMap                      = make(map[string]interface{})
 )
 
@@ -43,6 +44,11 @@ func getConfig() {
 	if countErr != nil {
 		hydrantCount = common.DefaultHydrantCount
 		countErr = nil
+	}
+
+	if chainIdErr != nil{
+		hydrantChainId = common.DefaultHydrantChainId
+		chainIdErr = nil
 	}
 	var err error
 	prv, err = vntCrypto.HexToECDSA(hydrantPrivteKey)
@@ -113,7 +119,7 @@ func (this *HydrantController) SendVnt() {
 	// build transaction
 	amount := big.NewInt(1).Mul(big.NewInt(int64(hydrantCount)), big.NewInt(1e18))
 	tx := vntTypes.NewTransaction(nonce, address, amount, common.DefaultGasLimit, big.NewInt(common.DefaultGasPrice), nil)
-	transaction, err := vntTypes.SignTx(tx, vntTypes.NewHubbleSigner(big.NewInt(1333)), prv)
+	transaction, err := vntTypes.SignTx(tx, vntTypes.NewHubbleSigner(big.NewInt(int64(hydrantChainId))), prv)
 	data, err := vntRlp.EncodeToBytes(transaction)
 	if err != nil {
 		this.ReturnErrorMsg("System error, signTx: %s. Please contract developers.", err.Error())
