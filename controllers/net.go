@@ -31,7 +31,7 @@ func (this *NetController) Stats() {
 		this.ReturnErrorMsg("Failed to get block height: %s", err.Error())
 	}
 
-	height := block.Number
+	height := block.Number + 1
 	currTps := block.Tps
 	topTpsBlock, err := block.TopTpsBlock()
 	if err != nil {
