@@ -24,7 +24,7 @@ var (
 	hydrantCount, countErr       = beego.AppConfig.Int("hydrant::count")
 	hydrantFrom                  = beego.AppConfig.String("hydrant::from")
 	hydrantPrivteKey             = beego.AppConfig.String("hydrant::privateKey")
-	hydrantChainId, chainIdErr   = beego.AppConfig.Int("hydrant:chainId")
+	hydrantChainId, chainIdErr   = beego.AppConfig.Int("hydrant::chainId")
 	addrMap                      = make(map[string]interface{})
 )
 
