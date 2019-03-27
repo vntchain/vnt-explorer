@@ -252,17 +252,17 @@ func ExtractAcct(tx *models.Transaction) {
 	return
 }
 
-func GetBalance(addr string, blockNumber uint64) string {
+func GetBalance(addr string) string {
 	rpc := common.NewRpc()
 	rpc.Method = common.Rpc_GetBlance
 
 	rpc.Params = append(rpc.Params, addr)
-	rpc.Params = append(rpc.Params, utils.EncodeUint64(blockNumber))
+	rpc.Params = append(rpc.Params, "latest")
 
 	err, resp, rpcError := utils.CallRpc(rpc)
 	if err != nil && rpcError == nil {
 		panic(err.Error())
-	} else if rpcError.Code == -32000 {
+	} else if rpcError != nil && rpcError.Code == -32000 {
 		return "0"
 	}
 
@@ -336,14 +336,14 @@ func NewAccount(addr string, tx *models.Transaction, _type int, txCount uint64) 
 		}
 	}
 
-	a.Balance = GetBalance(addr, tx.BlockNumber)
+	a.Balance = GetBalance(addr)
 	a.Percent = utils.GetBalancePercent(a.Balance, common.VNT_TOTAL, common.VNT_DECIMAL)
 	insertAcc(addr, a)
 }
 
 func UpdateAccount(account *models.Account, tx *models.Transaction, _type int) {
 
-	account.Balance = GetBalance(account.Address, tx.BlockNumber)
+	account.Balance = GetBalance(account.Address)
 	account.Percent = utils.GetBalancePercent(account.Balance, common.VNT_TOTAL, common.VNT_DECIMAL)
 	account.LastBlock = tx.BlockNumber
 
@@ -380,7 +380,7 @@ func UpdateAccount(account *models.Account, tx *models.Transaction, _type int) {
 	// Save the accounts in token transfer
 	for _, a := range retAddrs {
 		if acct := GetAccount(a); acct != nil {
-			acct.Balance = GetBalance(a, tx.BlockNumber)
+			acct.Balance = GetBalance(a)
 			acct.Percent = utils.GetBalancePercent(acct.Balance, common.VNT_TOTAL, common.VNT_DECIMAL)
 			acct.LastBlock = tx.BlockNumber
 			if acct.LastTx != tx.Hash {
@@ -399,7 +399,7 @@ func PersistWitnesses(accts []string, blockNumber uint64) {
 	beego.Info("Will persist witnesses accounts: ", accts)
 	for _, a := range accts {
 		if acct := GetAccount(a); acct != nil {
-			acct.Balance = GetBalance(a, blockNumber)
+			acct.Balance = GetBalance(a)
 			acct.Percent = utils.GetBalancePercent(acct.Balance, common.VNT_TOTAL, common.VNT_DECIMAL)
 			acct.LastBlock = blockNumber
 			updateAcc(a, acct)
