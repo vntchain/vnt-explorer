@@ -16,14 +16,14 @@ func (this *BlockController) Post() {
 	body := this.Ctx.Input.RequestBody
 	err := json.Unmarshal(body, block)
 	if err != nil {
-		this.ReturnErrorMsg("Wrong format of block: %s", err.Error())
+		this.ReturnErrorMsg("Wrong format of block: %s", err.Error(), "")
 		return
 	}
 
 	err = block.Insert()
 
 	if err != nil {
-		this.ReturnErrorMsg("Failed to create block: %s", err.Error())
+		this.ReturnErrorMsg("Failed to create block: %s", err.Error(), "")
 	} else {
 		this.ReturnData(block, nil)
 	}
@@ -49,12 +49,12 @@ func (this *BlockController) List() {
 	block := &models.Block{}
 	blocks, err := block.List(offset, limit, order, fields...)
 	if err != nil {
-		this.ReturnErrorMsg("Failed to list blocks: %s", err.Error())
+		this.ReturnErrorMsg("Failed to list blocks: %s", err.Error(), "")
 	} else {
 		count := make(map[string]int64)
 		count["count"], err = block.Count()
 		if err != nil {
-			this.ReturnErrorMsg("Failed to list blocks: %s", err.Error())
+			this.ReturnErrorMsg("Failed to list blocks: %s", err.Error(), "")
 			return
 		}
 		this.ReturnData(blocks, count)
@@ -66,7 +66,7 @@ func (this *BlockController) Get() {
 	//beego.Info("params", this.Ctx.Input.Params())
 	nOrh := this.Ctx.Input.Param(":n_or_h")
 	if len(nOrh) == 0 {
-		this.ReturnErrorMsg("Failed to get block number or hash", "")
+		this.ReturnErrorMsg("Failed to get block number or hash", "", "")
 		return
 	}
 
@@ -76,7 +76,7 @@ func (this *BlockController) Get() {
 	block := &models.Block{}
 	dbblock, err := block.Get(nOrh, fields...)
 	if err != nil {
-		this.ReturnErrorMsg("Failed to read block: %s", err.Error())
+		this.ReturnErrorMsg("Failed to read block: %s", err.Error(), "")
 	} else {
 		this.ReturnData(dbblock, nil)
 	}
@@ -86,7 +86,7 @@ func (this *BlockController) Count() {
 	block := &models.Block{}
 	count, err := block.Count()
 	if err != nil {
-		this.ReturnErrorMsg("Failed to get block count: %s", err.Error())
+		this.ReturnErrorMsg("Failed to get block count: %s", err.Error(), "")
 	} else {
 		this.ReturnData(count, nil)
 	}

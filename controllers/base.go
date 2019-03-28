@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/astaxie/beego"
 	"strings"
+	"github.com/vntchain/vnt-explorer/common"
 )
 
 type BaseController struct {
@@ -11,13 +12,13 @@ type BaseController struct {
 }
 
 type Response struct {
-	Ok   int         `json:"ok"`
-	Err  string      `json:"err"`
-	Data interface{} `json:"data"`
-	Extra interface{} `json:"extra"`
+	Ok   int         	`json:"ok"`
+	Err  *common.ErrorMessage  `json:"err"`
+	Data interface{} 	`json:"data"`
+	Extra interface{} 	`json:"extra"`
 }
 
-func makeResp(err string, data interface{}, extra interface{}) *Response {
+func makeResp(err string, errorCode string, data interface{}, extra interface{}) *Response {
 	isOk := len(err) == 0
 	var ok int
 	if isOk {
@@ -25,9 +26,18 @@ func makeResp(err string, data interface{}, extra interface{}) *Response {
 	} else {
 		ok = 0
 	}
+
+	var Error *common.ErrorMessage = nil
+	if err != "" {
+		Error = &common.ErrorMessage{
+			Code: errorCode,
+			Message: err,
+		}
+	}
+
 	resp := &Response{
 		ok,
-		err,
+		Error,
 		data,
 		extra,
 	}
@@ -37,17 +47,17 @@ func makeResp(err string, data interface{}, extra interface{}) *Response {
 	return resp
 }
 
-func (c *BaseController) ReturnErrorMsg(format, err string) {
+func (c *BaseController) ReturnErrorMsg(format, err string, errCode string) {
 	msg := fmt.Sprintf(format, err)
 	beego.Error(msg)
 	c.Ctx.Output.SetStatus(200)
-	c.Data["json"] = makeResp(msg, nil, nil)
+	c.Data["json"] = makeResp(msg, errCode, nil, nil)
 	c.ServeJSON()
 }
 
 func (c *BaseController) ReturnData(data interface{}, extra interface{}) {
 	c.Ctx.Output.SetStatus(200)
-	c.Data["json"] = makeResp("", data, extra)
+	c.Data["json"] = makeResp("", "", data, extra)
 	c.ServeJSON()
 }
 

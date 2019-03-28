@@ -3,8 +3,20 @@ package controllers
 import (
 	"strings"
 	"github.com/vntchain/vnt-explorer/models"
-	"errors"
+	"github.com/vntchain/vnt-explorer/common"
+	"github.com/astaxie/beego/orm"
+	"fmt"
 )
+
+type ErrorWrongKey struct {
+	format	string
+	keyword	string
+}
+
+func (e ErrorWrongKey) Error() string {
+	return fmt.Sprintf(e.format, e.keyword)
+}
+
 
 type SearchController struct {
 	BaseController
@@ -15,7 +27,7 @@ func (this *SearchController) Search() {
 	var err error
 	keyword := this.Ctx.Input.Param(":keyword")
 	if keyword == "" {
-		this.ReturnErrorMsg("Error happend: %s", "Wrong format of keyword")
+		this.ReturnErrorMsg("Error happend: %s", "Wrong format of keyword", common.ERROR_WRONG_KEYWORD)
 		return
 	}
 
@@ -49,12 +61,26 @@ func (this *SearchController) Search() {
 			}
 			break
 		default:
-			err = errors.New("wrong format of keyword")
+			err = ErrorWrongKey{"wrong format of keyword: %s", keyword}
 		}
 	}
 
 	if err != nil {
-		this.ReturnErrorMsg("Error happend: %s", err.Error())
+		if err == orm.ErrNoRows {
+			this.ReturnErrorMsg("Not data found %s", err.Error(), common.ERROR_NOT_FOUND)
+		} else {
+
+		}
+		switch err.(type) {
+		case models.ErrorBlockNumber:
+			this.ReturnErrorMsg("Block Number incorrect, %s", err.Error(), common.ERROR_WRONG_KEYWORD)
+			break
+		case ErrorWrongKey:
+			this.ReturnErrorMsg("%s", err.Error(), common.ERROR_WRONG_KEYWORD)
+			break
+		default:
+			this.ReturnErrorMsg("Error happend: %s", err.Error(), common.ERROR_SEARCH_ERROR)
+		}
 	} else {
 		this.ReturnData(sBody, nil)
 	}

@@ -6,8 +6,16 @@ import (
 	"strings"
 	"strconv"
 	"fmt"
-	"errors"
 )
+
+type ErrorBlockNumber struct {
+	format string
+	number string
+}
+
+func (e ErrorBlockNumber) Error() string {
+	return fmt.Sprintf(e.format, e.number)
+}
 
 type Block struct {
 	Number       uint64 `orm:"pk"`
@@ -58,9 +66,9 @@ func (b *Block) Get(nOrh string, fields ...string) (*Block, error) {
 		beego.Info("Will read block by number: ", nOrh)
 		b.Number, err = strconv.ParseUint(nOrh, 10, 64)
 		if err != nil {
-			msg := fmt.Sprintf("Wrong block number: %s", nOrh)
-			beego.Error(msg)
-			return nil, errors.New(msg)
+			e := ErrorBlockNumber {"Wrong block number: %s", nOrh}
+			beego.Error(e.Error())
+			return nil, e
 		}
 		err = o.Read(b, "Number")
 	}

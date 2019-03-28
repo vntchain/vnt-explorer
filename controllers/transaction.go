@@ -19,14 +19,14 @@ func (this *TransactionController) Post() {
 	err := json.Unmarshal(body, tx)
 
 	if err != nil {
-		this.ReturnErrorMsg("Wrong format of transaction: %s", err.Error())
+		this.ReturnErrorMsg("Wrong format of transaction: %s", err.Error(), "")
 		return
 	}
 
 	err = tx.Insert()
 
 	if err != nil {
-		this.ReturnErrorMsg("Failed to create transaction: %s", err.Error())
+		this.ReturnErrorMsg("Failed to create transaction: %s", err.Error(), "")
 	} else {
 		this.ReturnData(tx, nil)
 	}
@@ -62,12 +62,12 @@ func (this *TransactionController) List() {
 	txs, err := tx.List(offset, limit, order, block, account, isToken, -1, -1, fields...)
 
 	if err != nil {
-		this.ReturnErrorMsg("Failed to list transactions: ", err.Error())
+		this.ReturnErrorMsg("Failed to list transactions: ", err.Error(), "")
 	} else {
 		count := make(map[string]int64)
 		count["count"], err = tx.Count(block, account, isToken, -1, -1)
 		if err != nil {
-			this.ReturnErrorMsg("Failed to list TokenBalance: %s", err.Error())
+			this.ReturnErrorMsg("Failed to list TokenBalance: %s", err.Error(), "")
 			return
 		}
 		this.ReturnData(txs, count)
@@ -78,7 +78,7 @@ func (this *TransactionController) Get() {
 	//beego.Info("params", this.Ctx.Input.Params())
 	txHash := this.Ctx.Input.Param(":tx_hash")
 	if len(txHash) == 0 {
-		this.ReturnErrorMsg("Failed to get block number or hash", "")
+		this.ReturnErrorMsg("Failed to get block number or hash", "", "")
 		return
 	}
 
@@ -88,7 +88,7 @@ func (this *TransactionController) Get() {
 	tx := &models.Transaction{}
 	dbTx, err := tx.Get(txHash, fields...)
 	if err != nil {
-		this.ReturnErrorMsg("Failed to read transaction: %s", err.Error())
+		this.ReturnErrorMsg("Failed to read transaction: %s", err.Error(), "")
 	} else {
 		this.ReturnData(dbTx, nil)
 	}
@@ -108,7 +108,7 @@ func (this *TransactionController) Count() {
 	count, err := tx.Count(block, account, isToken, -1, -1)
 
 	if err != nil {
-		this.ReturnErrorMsg("Failed to count transactions: ", err.Error())
+		this.ReturnErrorMsg("Failed to count transactions: ", err.Error(), "")
 	} else {
 		this.ReturnData(count, nil)
 	}
@@ -122,7 +122,7 @@ func (this *TransactionController) History() {
 	if daysStr != "" {
 		days, err = strconv.Atoi(daysStr)
 		if err != nil {
-			this.ReturnErrorMsg("Wrong format of parameter days: %s", err.Error())
+			this.ReturnErrorMsg("Wrong format of parameter days: %s", err.Error(), "")
 			return
 		}
 	}
@@ -161,7 +161,7 @@ func (this *TransactionController) History() {
 
 		count, err := tx.Count("", "", -1, left.Unix(), right.Unix())
 		if err != nil {
-			this.ReturnErrorMsg("Failed to get transaction history: %s", err.Error())
+			this.ReturnErrorMsg("Failed to get transaction history: %s", err.Error(), "")
 			return
 		}
 

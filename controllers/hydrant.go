@@ -61,7 +61,7 @@ func (this *HydrantController) SendVnt() {
 	// get config
 	getConfig()
 	if prv == nil {
-		this.ReturnErrorMsg("System error!", "")
+		this.ReturnErrorMsg("System error!", "", common.ERROR_SYSTEM)
 		return
 	}
 
@@ -72,11 +72,11 @@ func (this *HydrantController) SendVnt() {
 	body := this.Ctx.Input.RequestBody
 	err := json.Unmarshal(body, &addr)
 	if err != nil {
-		this.ReturnErrorMsg("Wrong format of Address: %s", err.Error())
+		this.ReturnErrorMsg("Wrong format of Address: %s", err.Error(), common.ERROR_WRONG_ADDRESS)
 		return
 	}
 	if !isHex(addr.Address) {
-		this.ReturnErrorMsg("Wrong format of Address: %s, it must be 0x[0-9|a-f|A-F]* or [0-9|a-f|A-F]*", addr.Address)
+		this.ReturnErrorMsg("Wrong format of Address: %s, it must be 0x[0-9|a-f|A-F]* or [0-9|a-f|A-F]*", addr.Address, common.ERROR_WRONG_ADDRESS)
 		return
 	}
 	address := vntCommon.HexToAddress(addr.Address)
@@ -85,7 +85,7 @@ func (this *HydrantController) SendVnt() {
 	mutex.Lock()
 	if _, exists := addrMap[address.String()]; exists {
 		defer mutex.Unlock()
-		this.ReturnErrorMsg("Sending vnt to %s! Please wait for a moment! ", addr.Address)
+		this.ReturnErrorMsg("Sending vnt to %s! Please wait for a moment! ", addr.Address, common.ERROR_DUPLICATED_SEND)
 		return
 	}
 	addrMap[address.String()] = nil
@@ -98,7 +98,7 @@ func (this *HydrantController) SendVnt() {
 		// check interval
 		if now-hydrant.TimeStamp < int64(hydrantInterval) {
 			lastTime := time.Unix(hydrant.TimeStamp, 0)
-			this.ReturnErrorMsg("Too Frequently: the last time sent vnt to you is %s", lastTime.Format("2006-01-02 15:04:05"))
+			this.ReturnErrorMsg("Too Frequently: the last time sent vnt to you is %s", lastTime.Format("2006-01-02 15:04:05"), common.ERROR_SEND_TO_FREQUENTLY)
 			deleteAddrMap(address.String())
 			return
 		}
@@ -111,7 +111,7 @@ func (this *HydrantController) SendVnt() {
 	// get nonce
 	nonce, err := getNonce(hydrantFrom)
 	if err != nil {
-		this.ReturnErrorMsg("System error, get nonce: %s. Please contract developers.", err.Error())
+		this.ReturnErrorMsg("System error, get nonce: %s. Please contract developers.", err.Error(), common.ERROR_NONCE_ERROR)
 		deleteAddrMap(address.String())
 		return
 	}
@@ -122,7 +122,7 @@ func (this *HydrantController) SendVnt() {
 	transaction, err := vntTypes.SignTx(tx, vntTypes.NewHubbleSigner(big.NewInt(int64(hydrantChainId))), prv)
 	data, err := vntRlp.EncodeToBytes(transaction)
 	if err != nil {
-		this.ReturnErrorMsg("System error, signTx: %s. Please contract developers.", err.Error())
+		this.ReturnErrorMsg("System error, signTx: %s. Please contract developers.", err.Error(), common.ERROR_SIGN_ERROR)
 		deleteAddrMap(address.String())
 		return
 	}
@@ -135,7 +135,7 @@ func (this *HydrantController) SendVnt() {
 
 	err, resp, _ := utils.CallRpc(rpc)
 	if err != nil {
-		this.ReturnErrorMsg("System error, sendRawTransaction %s. Please contract developers.", err.Error())
+		this.ReturnErrorMsg("System error, sendRawTransaction %s. Please contract developers.", err.Error(), common.ERROR_TX_SEND_ERROR)
 		deleteAddrMap(address.String())
 		return
 	}

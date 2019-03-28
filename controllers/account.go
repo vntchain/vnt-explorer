@@ -16,13 +16,13 @@ func (this *AccountController) Post() {
 	body := this.Ctx.Input.RequestBody
 	err := json.Unmarshal(body, account)
 	if err != nil {
-		this.ReturnErrorMsg("Wrong format of Account: %s", err.Error())
+		this.ReturnErrorMsg("Wrong format of Account: %s", err.Error(), "")
 		return
 	}
 
 	err = account.Insert()
 	if err != nil {
-		this.ReturnErrorMsg("Failed to create Account: %s", err.Error())
+		this.ReturnErrorMsg("Failed to create Account: %s", err.Error(), "")
 	} else {
 		this.ReturnData(account, nil)
 	}
@@ -64,12 +64,12 @@ func (this *AccountController) List() {
 	account := &models.Account{}
 	accounts, err := account.List(isContract, isToken, order, offset, limit, fields)
 	if err != nil {
-		this.ReturnErrorMsg("Failed to list accounts: %s", err.Error())
+		this.ReturnErrorMsg("Failed to list accounts: %s", err.Error(), "")
 	} else {
 		count := make(map[string]int64)
 		count["count"], err = account.Count(isContract, isToken)
 		if err != nil {
-			this.ReturnErrorMsg("Failed to list accounts: %s", err.Error())
+			this.ReturnErrorMsg("Failed to list accounts: %s", err.Error(), "")
 			return
 		}
 		this.ReturnData(accounts, count)
@@ -81,7 +81,7 @@ func (this *AccountController) Get() {
 	//beego.Info("params", this.Ctx.Input.Params())
 	address := this.Ctx.Input.Param(":address")
 	if len(address) == 0 {
-		this.ReturnErrorMsg("Failed to get address", "")
+		this.ReturnErrorMsg("Failed to get address", "", "")
 		return
 	}
 	// TODO 这边暂时未对fields进行处理
@@ -90,7 +90,7 @@ func (this *AccountController) Get() {
 	account := &models.Account{}
 	dbaccount, err := account.Get(address)
 	if err != nil {
-		this.ReturnErrorMsg("Failed to read account: %s", err.Error())
+		this.ReturnErrorMsg("Failed to read account: %s", err.Error(), "")
 	} else {
 		this.ReturnData(dbaccount, nil)
 	}
@@ -102,7 +102,7 @@ func (this *AccountController) Count() {
 	account := &models.Account{}
 	count, err := account.Count(isContract, isToken)
 	if err != nil {
-		this.ReturnErrorMsg("Failed to get accounts count: %s", err.Error())
+		this.ReturnErrorMsg("Failed to get accounts count: %s", err.Error(), "")
 	} else {
 		this.ReturnData(count, nil)
 	}
