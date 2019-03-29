@@ -7,7 +7,7 @@ import (
 
 type Transaction struct {
 	Hash        	string `orm:"pk"`
-	TimeStamp   	uint64
+	TimeStamp   	uint64 `orm:"index"`
 	From        	string `orm:"index"`
 	To          	*Account `orm:"rel(fk);null"`
 	Value       	string

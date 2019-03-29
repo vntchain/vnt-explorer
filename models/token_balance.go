@@ -8,7 +8,7 @@ type TokenBalance struct {
 	Id      int
 	Account *Account `orm:"rel(fk)"`
 	Token   *Account `orm:"rel(fk)"`
-	Balance string
+	Balance string   `orm:"index"`
 	Percent float32
 }
 
