@@ -59,6 +59,11 @@ go get github.com/beego/bee
 go get github.com/go-sql-driver/mysql
 go get github.com/bluele/gcache
 go get github.com/vntchain/go-vnt
+
+# 切换一下beego依赖的分支
+cd $GOROOT/src/github.com/astaxie/beego
+git checkout -b v1.11.1 v1.11.1
+cd -
 ```
 
 ## 运行浏览器后端
