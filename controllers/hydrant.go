@@ -112,6 +112,7 @@ func (this *HydrantController) SendVnt() {
 	}
 
 	// get nonce
+	var localNonce uint64
 	nonceLock.Lock()
 	if nonce == 0 || nonceErr != nil {
 		nonce, nonceErr = getNonce(hydrantFrom)
@@ -124,11 +125,12 @@ func (this *HydrantController) SendVnt() {
 	} else {
 		nonce++
 	}
+	localNonce = nonce
 	nonceLock.Unlock()
 
 	// build transaction
 	amount := big.NewInt(1).Mul(big.NewInt(int64(hydrantCount)), big.NewInt(1e18))
-	tx := vntTypes.NewTransaction(nonce, address, amount, common.DefaultGasLimit, big.NewInt(common.DefaultGasPrice), nil)
+	tx := vntTypes.NewTransaction(localNonce, address, amount, common.DefaultGasLimit, big.NewInt(common.DefaultGasPrice), nil)
 	transaction, err := vntTypes.SignTx(tx, vntTypes.NewHubbleSigner(big.NewInt(int64(hydrantChainId))), prv)
 	data, err := vntRlp.EncodeToBytes(transaction)
 	if err != nil {
