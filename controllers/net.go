@@ -28,21 +28,21 @@ func (this *NetController) Stats() {
 	block := &models.Block{}
 	block, err := block.Last()
 	if err != nil {
-		this.ReturnErrorMsg("Failed to get block height: %s", err.Error())
+		this.ReturnErrorMsg("Failed to get block height: %s", err.Error(), "")
 	}
 
-	height := block.Number
+	height := block.Number + 1
 	currTps := block.Tps
 	topTpsBlock, err := block.TopTpsBlock()
 	if err != nil {
-		this.ReturnErrorMsg("Failed to get top tps: %s", err.Error())
+		this.ReturnErrorMsg("Failed to get top tps: %s", err.Error(), "")
 	}
 	topTps := topTpsBlock.Tps
 
 	tx := &models.Transaction{}
 	txCount, err := tx.Count("", "", -1, -1, -1)
 	if err != nil {
-		this.ReturnErrorMsg("Failed to get transaction count: %s", err.Error())
+		this.ReturnErrorMsg("Failed to get transaction count: %s", err.Error(), "")
 	}
 
 	acct := &models.Account{}
@@ -51,12 +51,12 @@ func (this *NetController) Stats() {
 	node := &models.Node{}
 	superNode,err := node.Count(1)
 	if err != nil {
-		this.ReturnErrorMsg("Failed to get super node count: %s", err.Error())
+		this.ReturnErrorMsg("Failed to get super node count: %s", err.Error(), "")
 	}
 
 	candiNode,err := node.Count(0)
 	if err != nil {
-		this.ReturnErrorMsg("Failed to get candidate node count: %s", err.Error())
+		this.ReturnErrorMsg("Failed to get candidate node count: %s", err.Error(), "")
 	}
 
 	stats := &NetStats{
@@ -69,5 +69,5 @@ func (this *NetController) Stats() {
 		candiNode,
 	}
 
-	this.ReturnData(stats)
+	this.ReturnData(stats, nil)
 }

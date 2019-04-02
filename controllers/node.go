@@ -16,15 +16,15 @@ func (this *NodeController) Post() {
 	body := this.Ctx.Input.RequestBody
 	err := json.Unmarshal(body, node)
 	if err != nil {
-		this.ReturnErrorMsg("Wrong format of Node: %s", err.Error())
+		this.ReturnErrorMsg("Wrong format of Node: %s", err.Error(), "")
 		return
 	}
 
 	err = node.Insert()
 	if err != nil {
-		this.ReturnErrorMsg("Failed to create Node: %s", err.Error())
+		this.ReturnErrorMsg("Failed to create Node: %s", err.Error(), "")
 	} else {
-		this.ReturnData(node)
+		this.ReturnData(node, nil)
 	}
 }
 
@@ -47,9 +47,15 @@ func (this *NodeController) List() {
 	node := &models.Node{}
 	nodes, err := node.List(order, offset, limit, fields)
 	if err != nil {
-		this.ReturnErrorMsg("Failed to list nodes: %s", err.Error())
+		this.ReturnErrorMsg("Failed to list nodes: %s", err.Error(), "")
 	} else {
-		this.ReturnData(nodes)
+		count := make(map[string]int64)
+		count["count"], err = node.Count(-1)
+		if err != nil {
+			this.ReturnErrorMsg("Failed to list nodes: %s", err.Error(), "")
+			return
+		}
+		this.ReturnData(nodes, count)
 	}
 
 }
@@ -65,13 +71,13 @@ func (this *NodeController) Count() {
 
 	superCount, err := node.Count(1)
 	if err != nil {
-		this.ReturnErrorMsg("Failed to get node count: %s", err.Error())
+		this.ReturnErrorMsg("Failed to get node count: %s", err.Error(), "")
 		return
 	}
 
 	candiCount, err := node.Count(0)
 	if err != nil {
-		this.ReturnErrorMsg("Failed to get node count: %s", err.Error())
+		this.ReturnErrorMsg("Failed to get node count: %s", err.Error(), "")
 		return
 	}
 
@@ -87,22 +93,22 @@ func (this *NodeController) Count() {
 		superCount + candiCount,
 	}
 
-	this.ReturnData(result)
+	this.ReturnData(result, nil)
 }
 
 func (this *NodeController) Get() {
 	//beego.Info("params", this.Ctx.Input.Params())
 	address := this.Ctx.Input.Param(":address")
 	if len(address) == 0 {
-		this.ReturnErrorMsg("Failed to get address", "")
+		this.ReturnErrorMsg("Failed to get address", "", "")
 		return
 	}
 
 	node := &models.Node{}
 	dbItem, err := node.Get(address)
 	if err != nil {
-		this.ReturnErrorMsg("Failed to read node: %s", err.Error())
+		this.ReturnErrorMsg("Failed to read node: %s", err.Error(), "")
 	} else {
-		this.ReturnData(dbItem)
+		this.ReturnData(dbItem, nil)
 	}
 }

@@ -14,7 +14,7 @@ func GetNodes() []*models.Node {
 	rpc := common.NewRpc()
 	rpc.Method = common.Rpc_GetAllCandidates
 
-	err, resp := utils.CallRpc(rpc)
+	err, resp, _ := utils.CallRpc(rpc)
 	if err != nil {
 		if err.Error() != "Rpc returned with error: code: -32000, error: empty witness candidates list" {
 			beego.Error("Get Node error: ", err)
@@ -69,7 +69,7 @@ func GetNodes() []*models.Node {
 		totalVotes = totalVotes.Add(totalVotes, votes)
 
 		nodeValue := models.Node{
-			Address:         address,
+			Address:         strings.ToLower(address),
 			Vname:           name,
 			Home:            website,
 			Ip:              ip,
@@ -79,15 +79,17 @@ func GetNodes() []*models.Node {
 			TotalBounty:     totalBounty.String(),
 			ExtractedBounty: extractedBounty.String(),
 			LastExtractTime: lastExtractTime.String(),
+			IsAlive: 1,
 		}
 		result = append(result, &nodeValue)
 	}
 
 	votesFloat := float64(totalVotes.Uint64())
 
-	for _, node := range result {
-		node.VotesPercent = float32(node.VotesFloat/votesFloat) * 100
+	if votesFloat > 0 {
+		for _, node := range result {
+			node.VotesPercent = float32(node.VotesFloat/votesFloat) * 100
+		}
 	}
-
 	return result
 }

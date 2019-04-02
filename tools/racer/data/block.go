@@ -44,28 +44,28 @@ func GetLocalHeight() (int64, *models.Block) {
 		panic(msg)
 	}
 
-	var bNumber uint64
+	var bNumber int64
 
 	if block == nil {
-		bNumber = 0
+		bNumber = -1
 	} else {
-		bNumber = block.Number
+		bNumber = int64(block.Number)
 	}
 
-	if bNumber != uint64(count) {
-		msg := fmt.Sprintf("Block data in db not matched! count %d not equal to lastest block number %d, please check you local database.", count, bNumber)
+	if bNumber + 1 != count {
+		msg := fmt.Sprintf("Block data in db not matched! count %d not match lastest block number %d, please check you local database.", count, bNumber)
 		beego.Error(msg)
 		panic(msg)
 	}
 
-	return count, block
+	return count-1, block
 }
 
 func GetRemoteHeight() int64 {
 	rpc := common.NewRpc()
 	rpc.Method = common.Rpc_BlockNumber
 
-	err, resp := utils.CallRpc(rpc)
+	err, resp, _ := utils.CallRpc(rpc)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -86,9 +86,13 @@ func GetBlock(number int64) (*models.Block, []interface{}, []interface{}) {
 		hex = "0x" + hex[3:]
 	}
 
+	if hex == "0x" {
+		hex = "0x0"
+	}
+
 	rpc.Params = append(rpc.Params, hex, false)
 
-	err, resp := utils.CallRpc(rpc)
+	err, resp, _ := utils.CallRpc(rpc)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -112,7 +116,7 @@ func GetBlock(number int64) (*models.Block, []interface{}, []interface{}) {
 		TimeStamp:  timestamp,
 		Hash:       blockMap["hash"].(string),
 		ParentHash: blockMap["parentHash"].(string),
-		Producer:   blockMap["producer"].(string),
+		Producer:   strings.ToLower(blockMap["producer"].(string)),
 		Size:       fmt.Sprintf("%d", size),
 		GasUsed:    gasUsed,
 		GasLimit:   gasLimit,
@@ -140,7 +144,7 @@ func GetTx(txHash string) *models.Transaction {
 
 	rpc.Params = append(rpc.Params, txHash)
 
-	err, resp := utils.CallRpc(rpc)
+	err, resp, _ := utils.CallRpc(rpc)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -150,7 +154,7 @@ func GetTx(txHash string) *models.Transaction {
 
 	rpc.Method = common.Rpc_GetTxReceipt
 
-	err, resp = utils.CallRpc(rpc)
+	err, resp, _ = utils.CallRpc(rpc)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -160,7 +164,7 @@ func GetTx(txHash string) *models.Transaction {
 
 	tx := &models.Transaction{
 		Hash:        txMap["hash"].(string),
-		From:        txMap["from"].(string),
+		From:        strings.ToLower(txMap["from"].(string)),
 		Value:       utils.Hex(txMap["value"].(string)).ToString(),
 		GasLimit:    utils.Hex(txMap["gas"].(string)).ToUint64(),
 		GasPrice:    utils.Hex(txMap["gasPrice"].(string)).ToString(),
@@ -183,7 +187,7 @@ func GetTx(txHash string) *models.Transaction {
 		}
 		tx.To = nil
 	} else {
-		tx.To = &models.Account{Address: to}
+		tx.To = &models.Account{Address: strings.ToLower(to)}
 	}
 
 	return tx
@@ -248,16 +252,18 @@ func ExtractAcct(tx *models.Transaction) {
 	return
 }
 
-func GetBalance(addr string, blockNumber uint64) string {
+func GetBalance(addr string) string {
 	rpc := common.NewRpc()
 	rpc.Method = common.Rpc_GetBlance
 
 	rpc.Params = append(rpc.Params, addr)
-	rpc.Params = append(rpc.Params, utils.EncodeUint64(blockNumber))
+	rpc.Params = append(rpc.Params, "latest")
 
-	err, resp := utils.CallRpc(rpc)
-	if err != nil {
+	err, resp, rpcError := utils.CallRpc(rpc)
+	if err != nil && rpcError == nil {
 		panic(err.Error())
+	} else if rpcError != nil && rpcError.Code == -32000 {
+		return "0"
 	}
 
 	balance := utils.Hex(resp.Result.(string)).ToString()
@@ -265,10 +271,10 @@ func GetBalance(addr string, blockNumber uint64) string {
 }
 
 func IsToken(addr string, tx *models.Transaction) (bool, *token.Erc20) {
-	totalSupply := token.GetTotalSupply(addr, tx.BlockNumber)
-	tokenName := token.GetTokenName(addr, tx.BlockNumber)
-	decimals := token.GetDecimals(addr, tx.BlockNumber)
-	symbol := token.GetSymbol(addr, tx.BlockNumber)
+	totalSupply := token.GetTotalSupply(addr)
+	tokenName := token.GetTokenName(addr)
+	decimals := token.GetDecimals(addr)
+	symbol := token.GetSymbol(addr)
 
 	if totalSupply != nil && decimals != nil && symbol != "" && tokenName != "" {
 		erc20 := &token.Erc20{
@@ -314,7 +320,7 @@ func NewAccount(addr string, tx *models.Transaction, _type int, txCount uint64) 
 		a.ContractName = "" // TODO: extract contract name from contract code
 		a.ContractOwner = tx.From
 
-		beego.Info("######### a.ContractOwner:", a.ContractOwner)
+		//beego.Info("######### a.ContractOwner:", a.ContractOwner)
 
 		if ok, erc20 := IsToken(addr, tx); ok {
 			a.IsToken = true
@@ -330,14 +336,14 @@ func NewAccount(addr string, tx *models.Transaction, _type int, txCount uint64) 
 		}
 	}
 
-	a.Balance = GetBalance(addr, tx.BlockNumber)
+	a.Balance = GetBalance(addr)
 	a.Percent = utils.GetBalancePercent(a.Balance, common.VNT_TOTAL, common.VNT_DECIMAL)
 	insertAcc(addr, a)
 }
 
 func UpdateAccount(account *models.Account, tx *models.Transaction, _type int) {
 
-	account.Balance = GetBalance(account.Address, tx.BlockNumber)
+	account.Balance = GetBalance(account.Address)
 	account.Percent = utils.GetBalancePercent(account.Balance, common.VNT_TOTAL, common.VNT_DECIMAL)
 	account.LastBlock = tx.BlockNumber
 
@@ -374,7 +380,7 @@ func UpdateAccount(account *models.Account, tx *models.Transaction, _type int) {
 	// Save the accounts in token transfer
 	for _, a := range retAddrs {
 		if acct := GetAccount(a); acct != nil {
-			acct.Balance = GetBalance(a, tx.BlockNumber)
+			acct.Balance = GetBalance(a)
 			acct.Percent = utils.GetBalancePercent(acct.Balance, common.VNT_TOTAL, common.VNT_DECIMAL)
 			acct.LastBlock = tx.BlockNumber
 			if acct.LastTx != tx.Hash {
@@ -393,7 +399,7 @@ func PersistWitnesses(accts []string, blockNumber uint64) {
 	beego.Info("Will persist witnesses accounts: ", accts)
 	for _, a := range accts {
 		if acct := GetAccount(a); acct != nil {
-			acct.Balance = GetBalance(a, blockNumber)
+			acct.Balance = GetBalance(a)
 			acct.Percent = utils.GetBalancePercent(acct.Balance, common.VNT_TOTAL, common.VNT_DECIMAL)
 			acct.LastBlock = blockNumber
 			updateAcc(a, acct)

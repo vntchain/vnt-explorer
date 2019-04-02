@@ -6,8 +6,9 @@ import (
 	"time"
 
 	"github.com/astaxie/beego"
-	"github.com/vntchain/vnt-explorer/tools/racer/data"
 	"github.com/vntchain/vnt-explorer/models"
+	"github.com/vntchain/vnt-explorer/tools/racer/data"
+	"strings"
 )
 
 func main() {
@@ -27,6 +28,7 @@ func main() {
 	//ta, err := tb.GetByAddr("hello", "there")
 	//beego.Info(ta, err == orm.ErrNoRows)
 	//return
+	registerElectionContract()
 
 	for {
 		doSync()
@@ -44,29 +46,31 @@ func doSync() {
 	rmtHgt, localHgt, lastBlock := checkHeight()
 
 	// localHgt = 14
-	//rmtHgt = 2000
+	//rmtHgt = 25913
 	beego.Info(fmt.Sprintf("Local height: %d, rmtHeight: %d", localHgt, rmtHgt))
 	if localHgt >= rmtHgt {
+		beego.Info("here!")
 		time.Sleep(2 * time.Second)
 		return
 	}
 
-	nodes := data.GetNodes()
-	for _, node := range nodes {
-		if err := node.Insert(); err != nil {
-			msg := fmt.Sprintf("Failed to insert node: %s", err.Error())
-			panic(msg)
-		}
+	var block *models.Block
+	var txs, witnesses []interface{}
+	var leftAddrs []string
+
+	// Set the block sync batch to 1000
+	if rmtHgt-localHgt > 1000 {
+		rmtHgt = localHgt + 1000
 	}
 
 	for localHgt < rmtHgt {
-		block, txs, witnesses := data.GetBlock(localHgt + 1)
+		block, txs, witnesses = data.GetBlock(localHgt + 1)
 
 		beego.Info("Block:", block)
 		beego.Info("txs:", txs)
 		beego.Info("witness:", witnesses)
 
-		leftAddrs := make([]string, 0)
+		leftAddrs = make([]string, 0)
 		for _, w := range witnesses {
 			leftAddrs = append(leftAddrs, fmt.Sprintf("%v", w))
 		}
@@ -127,6 +131,27 @@ func doSync() {
 
 		localHgt = localHgt + 1
 	}
+
+	witMap := make(map[string]int)
+	//fmt.Println("witnesses: %v", leftAddrs)
+	for _, addr := range leftAddrs {
+		witMap[strings.ToLower(addr)] = 1
+	}
+
+	nodes := data.GetNodes()
+	for _, node := range nodes {
+		//fmt.Println("node address: %s", node.Address)
+		if witMap[node.Address] == 1 {
+			node.IsSuper = 1
+		} else {
+			node.IsSuper = 0
+		}
+		if err := node.Insert(); err != nil {
+			msg := fmt.Sprintf("Failed to insert node: %s", err.Error())
+			panic(msg)
+		}
+	}
+
 }
 
 func checkHeight() (int64, int64, *models.Block) {
@@ -140,4 +165,31 @@ func checkHeight() (int64, int64, *models.Block) {
 	}
 
 	return rmtHgt, localHgt, lastBlock
+}
+
+func registerElectionContract() {
+	electionAddr := "0x0000000000000000000000000000000000000009"
+	election := &models.Account{}
+	election, err := election.Get(electionAddr)
+	if err != nil {
+		election = &models.Account{
+			Address:        electionAddr,
+			Balance:        "0",
+			TxCount:        0,
+			IsContract:     true,
+			ContractName:   "election",
+			TokenAcctCount: "0",
+			TokenAmount:    "0",
+		}
+		if err = election.Insert(); err != nil {
+			msg := fmt.Sprintf("Failed to insert election contract account: %s", err.Error())
+			panic(msg)
+		}
+	}else if election.ContractName==""{
+		election.ContractName = "election"
+		if err = election.Update(); err != nil {
+			msg := fmt.Sprintf("Failed to update election contract account: %s", err.Error())
+			panic(msg)
+		}
+	}
 }

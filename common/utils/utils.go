@@ -7,7 +7,7 @@ import (
 )
 
 func GetBalancePercent(balance string, totalSupply string, decimal int) float32 {
-	if len(balance) < decimal {
+	if len(balance) <= decimal {
 		return 0
 	}
 

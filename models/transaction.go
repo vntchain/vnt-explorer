@@ -7,7 +7,7 @@ import (
 
 type Transaction struct {
 	Hash        	string `orm:"pk"`
-	TimeStamp   	uint64
+	TimeStamp   	uint64 `orm:"index"`
 	From        	string `orm:"index"`
 	To          	*Account `orm:"rel(fk);null"`
 	Value       	string
@@ -32,7 +32,7 @@ func makeCond(block string, account string, isToken int, start, end int64) *orm.
 		cond = cond.And("blockNumber", block)
 	}
 
-	if len(account) > 0 {
+	if len(account) > 0 && isToken != 1 {
 		cond2 := orm.NewCondition()
 		cond = cond.AndCond(cond2.Or("from", account).Or("to", account).
 			Or("token_to", account).Or("token_from", account).Or("contract_addr", account))
@@ -42,6 +42,13 @@ func makeCond(block string, account string, isToken int, start, end int64) *orm.
 		cond = cond.And("is_token", false)
 	} else if isToken == 1 {
 		cond = cond.And("is_token", true)
+
+		if len(account) > 0 {
+			// only returns txs that token_to or token_from indicates the address
+			cond2 := orm.NewCondition()
+			cond = cond.AndCond(cond2.Or("token_to", account).
+				Or("token_from", account))
+		}
 	}
 
 	if start >= 0 {

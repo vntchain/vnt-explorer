@@ -7,9 +7,9 @@ import (
 type Account struct {
 	Address        string `orm:"pk"`
 	Vname          string `orm:"unique"`
-	Balance        string
+	Balance        string `orm:"index"`
 	TxCount        uint64
-	IsContract     bool
+	IsContract     bool   `orm:"index"`
 	ContractName   string
 	ContractOwner  string `orm:"index"`
 	Code           string `orm:"type(text)"`
@@ -17,7 +17,7 @@ type Account struct {
 	Home           string
 	InitTx         string
 	LastTx		   string
-	IsToken        bool
+	IsToken        bool	  `orm:"index"`
 	TokenType      int
 	TokenSymbol    string
 	TokenLogo      string

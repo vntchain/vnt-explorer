@@ -13,6 +13,7 @@ import (
 	"github.com/vntchain/vnt-explorer/common/utils"
 	"github.com/astaxie/beego/orm"
 	"strconv"
+	"strings"
 )
 
 var transferSig = map[string]string {
@@ -70,7 +71,7 @@ func UpdateTokenBalance(token *models.Account, tx *models.Transaction) []string 
 			tokenBalance := &models.TokenBalance{}
 			tokenBalance, err := tokenBalance.GetByAddr(addr, token.Address)
 			if err != nil && err == orm.ErrNoRows {
-				tokenBalance.Balance = GetAmount(token.Address, addr, tx.BlockNumber)
+				tokenBalance.Balance = GetAmount(token.Address, addr)
 				tokenBalance.Percent = utils.GetBalancePercent(tokenBalance.Balance, token.TokenAmount, int(token.TokenDecimals))
 				 if err = tokenBalance.Insert(); err != nil {
 				 	msg := fmt.Sprintf("Failed to insert token balance, token:%s, address:%s, balance:%s",
@@ -96,7 +97,7 @@ func UpdateTokenBalance(token *models.Account, tx *models.Transaction) []string 
 				beego.Error(msg)
 				panic(msg)
 			} else if tokenBalance.Id > 0 {
-				tokenBalance.Balance = GetAmount(token.Address, addr, tx.BlockNumber)
+				tokenBalance.Balance = GetAmount(token.Address, addr)
 				tokenBalance.Percent = utils.GetBalancePercent(tokenBalance.Balance, token.TokenAmount, int(token.TokenDecimals))
 				if err := tokenBalance.Update(); err != nil {
 					msg := fmt.Sprintf("Failed to update token balance, token:%s, address:%s, token:%s",
@@ -142,7 +143,7 @@ func GetTransferAddrs(tx *models.Transaction) (addrs []string) {
 			panic(msg)
 		}
 
-		addrs = append(addrs, tx.From, _input.To.String())
+		addrs = append(addrs, tx.From, strings.ToLower(_input.To.String()))
 
 		tx.TokenFrom = tx.From
 		tx.TokenTo = _input.To.String()
@@ -163,7 +164,7 @@ func GetTransferAddrs(tx *models.Transaction) (addrs []string) {
 			panic(msg)
 		}
 
-		addrs = append(addrs, tx.From, _input.From.String(), _input.To.String())
+		addrs = append(addrs, tx.From, strings.ToLower(_input.From.String()), strings.ToLower(_input.To.String()))
 
 		tx.TokenFrom = _input.From.String()
 		tx.TokenTo = _input.To.String()
@@ -173,24 +174,23 @@ func GetTransferAddrs(tx *models.Transaction) (addrs []string) {
 	return
 }
 
-func call(token string, blockNumber uint64, data []byte) *common.Response {
+func call(token string, data []byte) (*common.Response, *common.Error) {
 	dataHex := utils.Encode(data)
 
 	rpc := common.NewRpc()
 	rpc.Method = common.Rpc_Call
 	rpc.Params = append(rpc.Params, map[string]interface{}{"to": token,
 		"gas": utils.EncodeUint64(3000000),
-		"data": dataHex},
-		utils.EncodeUint64(blockNumber))
+		"data": dataHex}, "latest")
 
-	err, resp := utils.CallRpc(rpc)
-	if err != nil {
+	err, resp, rpcError := utils.CallRpc(rpc)
+	if err != nil && rpcError == nil {
 		panic(err.Error())
 	}
-	return resp
+	return resp, rpcError
 }
 
-func GetAmount(token, addr string, blockNumber uint64) string {
+func GetAmount(token, addr string) string {
 	data, err := Abi.Pack("GetAmount", vntCommon.HexToAddress(addr))
 
 	if err != nil {
@@ -199,7 +199,11 @@ func GetAmount(token, addr string, blockNumber uint64) string {
 		panic(msg)
 	}
 
-	resp := call(token, blockNumber, data)
+	resp, rpcErr := call(token, data)
+
+	if rpcErr != nil && rpcErr.Code == -32000 {
+		return "0"
+	}
 
 	var _out *big.Int
 
@@ -210,7 +214,7 @@ func GetAmount(token, addr string, blockNumber uint64) string {
 	return _out.String()
 }
 
-func GetTotalSupply(token string, blockNumber uint64) *big.Int {
+func GetTotalSupply(token string) *big.Int {
 	data, err := Abi.Pack("GetTotalSupply")
 
 	if err != nil {
@@ -219,7 +223,7 @@ func GetTotalSupply(token string, blockNumber uint64) *big.Int {
 		panic(msg)
 	}
 
-	resp := call(token, blockNumber, data)
+	resp, _ := call(token, data)
 
 	var _out *big.Int
 
@@ -230,7 +234,7 @@ func GetTotalSupply(token string, blockNumber uint64) *big.Int {
 	return _out
 }
 
-func GetDecimals(token string, blockNumber uint64) *big.Int {
+func GetDecimals(token string) *big.Int {
 	data, err := Abi.Pack("GetDecimals")
 
 	if err != nil {
@@ -239,7 +243,7 @@ func GetDecimals(token string, blockNumber uint64) *big.Int {
 		panic(msg)
 	}
 
-	resp := call(token, blockNumber, data)
+	resp, _ := call(token, data)
 
 	var _out *big.Int
 
@@ -250,7 +254,7 @@ func GetDecimals(token string, blockNumber uint64) *big.Int {
 	return _out
 }
 
-func GetSymbol(token string, blockNumber uint64) string {
+func GetSymbol(token string) string {
 	data, err := Abi.Pack("GetSymbol")
 
 	if err != nil {
@@ -259,7 +263,7 @@ func GetSymbol(token string, blockNumber uint64) string {
 		panic(msg)
 	}
 
-	resp := call(token, blockNumber, data)
+	resp, _ := call(token, data)
 
 	var _out string
 
@@ -270,7 +274,7 @@ func GetSymbol(token string, blockNumber uint64) string {
 	return _out
 }
 
-func GetTokenName(token string, blockNumber uint64) string {
+func GetTokenName(token string) string {
 	data, err := Abi.Pack("GetTokenName")
 
 	if err != nil {
@@ -279,7 +283,7 @@ func GetTokenName(token string, blockNumber uint64) string {
 		panic(msg)
 	}
 
-	resp := call(token, blockNumber, data)
+	resp, _ := call(token, data)
 
 	var _out string
 
