@@ -61,7 +61,7 @@ go get github.com/bluele/gcache
 go get github.com/vntchain/go-vnt
 
 # 切换一下beego依赖的分支
-cd $GOROOT/src/github.com/astaxie/beego
+cd $GOPATH/src/github.com/astaxie/beego
 git checkout -b v1.11.1 v1.11.1
 cd -
 ```
