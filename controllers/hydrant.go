@@ -176,7 +176,6 @@ func updateHydrant(addr string, hydrant *models.Hydrant) {
 	if err := hydrant.InsertOrUpdate(); err != nil {
 		msg := fmt.Sprintf("Failed to update account: %s, error: %s", addr, err.Error())
 		beego.Error(msg)
-		panic(err)
 	}
 }
 
