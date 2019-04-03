@@ -31,7 +31,7 @@ type Account struct {
 
 func (a *Account) Insert() error {
 	o := orm.NewOrm()
-	_, err := o.Insert(a)
+	_, err := o.InsertOrUpdate(a)
 	return err
 }
 

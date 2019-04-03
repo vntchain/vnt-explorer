@@ -39,6 +39,12 @@ func (b *Block) Insert() error {
 	return err
 }
 
+func (b *Block) Update() error {
+	o := orm.NewOrm()
+	_, err := o.Update(b)
+	return err
+}
+
 func (b *Block) List(offset, limit int64, order string, fields ...string) ([]*Block, error) {
 	o := orm.NewOrm()
 	qs := o.QueryTable(b)
@@ -74,6 +80,21 @@ func (b *Block) Get(nOrh string, fields ...string) (*Block, error) {
 	}
 
 	return b, err
+}
+
+func (b *Block) GetByNumber(number uint64) (*Block, error) {
+	o := orm.NewOrm()
+	b.Number = number
+	err := o.Read(b, "Number")
+	return b, err
+}
+
+func (b *Block) CountBellow(number uint64) (int64, error) {
+	o := orm.NewOrm()
+	qs := o.QueryTable(b).SetCond(orm.NewCondition().And("number__lte", number))
+
+	cnt, err := qs.Count()
+	return cnt, err
 }
 
 func (b *Block) Last() (*Block, error) {

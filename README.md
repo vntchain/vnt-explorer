@@ -48,6 +48,8 @@ privateKey = "ac355731983f9ad945b642f15ed60022fa4aeb8f5c069d4f15a24c4b5100195b"
 count = 100
 # 发币间隔，同一个账号在这个间隔内只能发一次币
 interval = 3600
+# 测试网的chianid
+chainId = 0
 
 ```
 

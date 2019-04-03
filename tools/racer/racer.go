@@ -2,32 +2,19 @@ package main
 
 import (
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/astaxie/beego"
 	"github.com/vntchain/vnt-explorer/models"
 	"github.com/vntchain/vnt-explorer/tools/racer/data"
-	"strings"
+	"github.com/vntchain/vnt-explorer/tools/racer/token"
+	"runtime/debug"
+	"sync"
 )
 
 func main() {
-
-	//amount := token.GetMount("0x2b437e35b08ce2d995922f0f07dd67e94ab85b88", "0x122369f04f32269598789998de33e3d56e2c507a", 4201)
-	//beego.Info("Amount is: ", amount)
-	//supply := token.GetTotalSupply("0x2b437e35b08ce2d995922f0f07dd67e94ab85b88", 4201)
-	//beego.Info("supply is: ", supply)
-	//dec := token.GetDecimals("0x2b437e35b08ce2d995922f0f07dd67e94ab85b88", 4201)
-	//beego.Info("dec is: ", dec)
-	//symbol := token.GetSymbol("0x2b437e35b08ce2d995922f0f07dd67e94ab85b88", 4201)
-	//beego.Info("symbol is: ", symbol)
-	//tokenName := token.GetTokenName("0x2b437e35b08ce2d995922f0f07dd67e94ab85b88", 4201)
-	//beego.Info("tokenName is: ", tokenName)
-	//
-	//tb := models.TokenBalance{}
-	//ta, err := tb.GetByAddr("hello", "there")
-	//beego.Info(ta, err == orm.ErrNoRows)
-	//return
+	//a := data.SearchValidHeight(1186, 1192)
+	//beego.Info(a)
 	registerElectionContract()
 
 	for {
@@ -39,11 +26,13 @@ func doSync() {
 	defer func() {
 		if r := recover(); r != nil {
 			beego.Error("Error happened:", r)
+			debug.PrintStack()
 			time.Sleep(2 * time.Second)
 		}
 	}()
 
-	rmtHgt, localHgt, lastBlock := checkHeight()
+	var rmtHgt, localHgt int64
+	rmtHgt, localHgt = checkHeight()
 
 	// localHgt = 14
 	//rmtHgt = 25913
@@ -54,109 +43,60 @@ func doSync() {
 		return
 	}
 
-	var block *models.Block
-	var txs, witnesses []interface{}
-	var leftAddrs []string
-
-	// Set the block sync batch to 1000
-	if rmtHgt-localHgt > 1000 {
-		rmtHgt = localHgt + 1000
+	// Set the block sync batch
+	if rmtHgt-localHgt > data.BatchSize {
+		rmtHgt = localHgt + data.BatchSize
 	}
 
 	for localHgt < rmtHgt {
-		block, txs, witnesses = data.GetBlock(localHgt + 1)
-
-		beego.Info("Block:", block)
-		beego.Info("txs:", txs)
-		beego.Info("witness:", witnesses)
-
-		leftAddrs = make([]string, 0)
-		for _, w := range witnesses {
-			leftAddrs = append(leftAddrs, fmt.Sprintf("%v", w))
-		}
-
-		var dynamicReward float64
-
-		for _, txHash := range txs {
-			tx := data.GetTx(fmt.Sprintf("%v", txHash))
-			tx.TimeStamp = block.TimeStamp
-			beego.Info("Got transaction: ", tx)
-			err := tx.Insert()
-			if err != nil {
-				msg := fmt.Sprintf("Failed to insert transaction: %s", err.Error())
-				panic(msg)
-			}
-
-			beego.Info("Will extract accounts from transaction: ", txHash)
-			data.ExtractAcct(tx)
-
-			tmp, err := strconv.Atoi(tx.GasPrice)
-			if err != nil {
-				msg := fmt.Sprintf("Failed to convert gasPrice: %s", err.Error())
-				panic(msg)
-			}
-			dynamicReward += float64(tx.GasUsed) * (float64(tmp) / 1e18)
-			// beego.Info("---------> tx.GasUsed == ", tx.GasUsed, "tx.GasPrice ==", tx.GasPrice)
-		}
-
-		block.TxCount = len(txs)
-		time := float32(2.0)
-		if lastBlock != nil {
-			time = float32(block.TimeStamp - lastBlock.TimeStamp)
-		}
-		block.Tps = float32(block.TxCount) / time
-
-		// Persist witness accounts and other unknown accounts from token transfer
-		data.PersistWitnesses(leftAddrs, block.Number)
-
-		// compute blockReward
-		// 区块奖励，0-47304000都是6个vnt，47304001-94608000是3个，再之后是1.5个
-		var staticReward float64
-		if block.Number >= 0 && block.Number <= 47304000 {
-			staticReward = 6
-		} else if block.Number >= 47304001 && block.Number <= 94608000 {
-			staticReward = 3
-		} else if block.Number >= 94608001 {
-			staticReward = 1.5
-		}
-
-		result := staticReward + dynamicReward
-		block.BlockReward = fmt.Sprintf("%f VNT (%f + %f)", result, staticReward, dynamicReward)
-		// beego.Info("---------> block.BlockReward == ", block.BlockReward)
-		err := block.Insert()
-		if err != nil {
-			msg := fmt.Sprintf("Failed to insert block: %s", err.Error())
-			panic(msg)
-		}
-
 		localHgt = localHgt + 1
+		data.PostBlockTask(data.NewBlockTask(localHgt))
 	}
 
-	witMap := make(map[string]int)
-	//fmt.Println("witnesses: %v", leftAddrs)
-	for _, addr := range leftAddrs {
-		witMap[strings.ToLower(addr)] = 1
-	}
+	data.PostNodesTask(data.NewNodesTask())
 
-	nodes := data.GetNodes()
-	for _, node := range nodes {
-		//fmt.Println("node address: %s", node.Address)
-		if witMap[node.Address] == 1 {
-			node.IsSuper = 1
-		} else {
-			node.IsSuper = 0
-		}
-		if err := node.Insert(); err != nil {
-			msg := fmt.Sprintf("Failed to insert node: %s", err.Error())
-			panic(msg)
-		}
-	}
-
+	Wait()
 }
 
-func checkHeight() (int64, int64, *models.Block) {
+func Wait() {
+	for {
+		blockQueued, blockActive := data.BlockPool.Routines()
+		blockInsertPoolQ, blockInsertPoolA := data.BlockInsertPool.Routines()
+		txQueued, txActive := data.TxPool.Routines()
+		accoutExtQueued, accountExtActive := data.AccountExtractPool.Routines()
+		accoutQueued, accountActive := data.AccountPool.Routines()
+		witQueued, witActive := data.WitnessesPool.Routines()
+		nodeQueded, nodeActive := data.NodePool.Routines()
+
+		//beego.Info("Work Pool status:")
+		//beego.Info("Block Pool:", "Queued=", blockQueued, ",Active=", blockActive)
+		//beego.Info("Block Insert Pool:", "Queued=", blockInsertPoolQ, ",Active=", blockInsertPoolA)
+		//beego.Info("Tx Pool:", "Queued=", txQueued, ",Active=", txActive)
+		//beego.Info("Account Extract Pool:", "Queued=", accoutExtQueued, ",Active=", accountExtActive)
+		//beego.Info("Account Pool:", "Queued=", accoutQueued, ",Active=", accountActive)
+		//beego.Info("Witness Pool:", "Queued=", witQueued, ",Active=", witActive)
+		//beego.Info("Node Pool:", "Queued=", nodeQueded, ",Active=", nodeActive)
+
+		if blockQueued + blockActive == 0 &&
+			blockInsertPoolQ + blockInsertPoolA == 0 &&
+			txQueued + txActive == 0 &&
+			accoutExtQueued + accountExtActive == 0 &&
+			accoutQueued + accountActive == 0 &&
+			witQueued + witActive == 0 &&
+			nodeQueded + nodeActive == 0 {
+			data.AccountMap = sync.Map{}
+			token.TokenMap = sync.Map{}
+			//time.Sleep(1 * time.Second)
+			break
+		}
+
+		time.Sleep(500 * time.Millisecond)
+	}
+}
+
+func checkHeight() (int64, int64) {
 	rmtHgt := data.GetRemoteHeight()
-	localHgt, lastBlock := data.GetLocalHeight()
+	localHgt, _ := data.GetLocalHeight()
 
 	if localHgt > rmtHgt {
 		msg := fmt.Sprintf("Local height %d is bigger than remote height: %d, please check your remote node", localHgt, rmtHgt)
@@ -164,7 +104,7 @@ func checkHeight() (int64, int64, *models.Block) {
 		panic(msg)
 	}
 
-	return rmtHgt, localHgt, lastBlock
+	return rmtHgt, localHgt
 }
 
 func registerElectionContract() {

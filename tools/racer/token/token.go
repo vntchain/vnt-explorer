@@ -11,8 +11,6 @@ import (
 	"fmt"
 	"github.com/vntchain/vnt-explorer/common"
 	"github.com/vntchain/vnt-explorer/common/utils"
-	"github.com/astaxie/beego/orm"
-	"strconv"
 	"strings"
 )
 
@@ -56,6 +54,9 @@ func readAbi(abiPath string) abi.ABI {
 
 func IsTransfer(tx *models.Transaction) bool {
 	input := tx.Input
+	if len(input) < 10 {
+		return false
+	}
 	sig := input[0:10]
 	if _, ok := transferSig[sig]; ok {
 		return true
@@ -68,45 +69,7 @@ func UpdateTokenBalance(token *models.Account, tx *models.Transaction) []string 
 		beego.Info("This is a token transfer transaction:", tx.Hash)
 		addrs := GetTransferAddrs(tx)
 		for _, addr := range addrs {
-			tokenBalance := &models.TokenBalance{}
-			tokenBalance, err := tokenBalance.GetByAddr(addr, token.Address)
-			if err != nil && err == orm.ErrNoRows {
-				tokenBalance.Balance = GetAmount(token.Address, addr)
-				tokenBalance.Percent = utils.GetBalancePercent(tokenBalance.Balance, token.TokenAmount, int(token.TokenDecimals))
-				 if err = tokenBalance.Insert(); err != nil {
-				 	msg := fmt.Sprintf("Failed to insert token balance, token:%s, address:%s, balance:%s",
-				 		tokenBalance.Token, tokenBalance.Account, tokenBalance.Balance)
-				 	beego.Error(msg)
-				 	panic(msg)
-				 }
-
-				 currCount, _ := strconv.ParseUint(token.TokenAcctCount, 10, 64)
-				 currCount ++
-				 token.TokenAcctCount = fmt.Sprintf("%d", currCount)
-				 err = token.Update()
-				 if err != nil {
-				 	msg := fmt.Sprintf("Failed to update token account count, error: %s", err.Error())
-				 	beego.Error(msg)
-				 	panic(msg)
-				 }
-
-				 beego.Info("Success to insert token balance:", tokenBalance.Token, tokenBalance.Account, tokenBalance.Balance)
-			} else if err != nil {
-				msg := fmt.Sprintf("Failed to get token balance, token:%s, address:%s",
-					tokenBalance.Token, tokenBalance.Account)
-				beego.Error(msg)
-				panic(msg)
-			} else if tokenBalance.Id > 0 {
-				tokenBalance.Balance = GetAmount(token.Address, addr)
-				tokenBalance.Percent = utils.GetBalancePercent(tokenBalance.Balance, token.TokenAmount, int(token.TokenDecimals))
-				if err := tokenBalance.Update(); err != nil {
-					msg := fmt.Sprintf("Failed to update token balance, token:%s, address:%s, token:%s",
-						tokenBalance.Token, tokenBalance.Account, tokenBalance.Account)
-					beego.Error(msg)
-					panic(msg)
-				}
-				beego.Info("Success to update token balance:", tokenBalance.Token, tokenBalance.Account, tokenBalance.Balance)
-			}
+			PostTokenTask(NewTokenTask(token, addr))
 		}
 		return addrs[1:]
 	}
