@@ -49,6 +49,8 @@ func (this *TransactionController) List() {
 
 	order := this.GetString("order")
 
+	from := this.GetString("from")
+
 	fields := this.getFields()
 
 	block := this.GetString("block")
@@ -61,13 +63,13 @@ func (this *TransactionController) List() {
 	}
 
 	tx := &models.Transaction{}
-	txs, err := tx.List(offset, limit, order, block, account, isToken, -1, -1, fields...)
+	txs, err := tx.List(offset, limit, order, block, account, isToken, from, -1, -1, fields...)
 
 	if err != nil {
 		this.ReturnErrorMsg("Failed to list transactions: ", err.Error(), "")
 	} else {
 		count := make(map[string]int64)
-		count["count"], err = tx.Count(block, account, isToken, -1, -1)
+		count["count"], err = tx.Count(block, account, isToken, from, -1, -1)
 		if err != nil {
 			this.ReturnErrorMsg("Failed to list TokenBalance: %s", err.Error(), "")
 			return
@@ -110,8 +112,10 @@ func (this *TransactionController) Count() {
 		isToken = -1
 	}
 
+	from := this.GetString("from")
+
 	tx := &models.Transaction{}
-	count, err := tx.Count(block, account, isToken, -1, -1)
+	count, err := tx.Count(block, account, isToken, from, -1, -1)
 
 	if err != nil {
 		this.ReturnErrorMsg("Failed to count transactions: ", err.Error(), "")
@@ -164,7 +168,7 @@ func (this *TransactionController) History() {
 		left := start
 		right := start.Add(during)
 
-		count, err := tx.Count("", "", -1, left.Unix(), right.Unix())
+		count, err := tx.Count("", "", -1, "", left.Unix(), right.Unix())
 		if err != nil {
 			this.ReturnErrorMsg("Failed to get transaction history: %s", err.Error(), "")
 			return
