@@ -91,10 +91,18 @@ func (this *AccountController) Get() {
 
 	account := &models.Account{}
 	dbaccount, err := account.Get(address)
+
 	if err != nil {
 		this.ReturnErrorMsg("Failed to read account: %s", err.Error(), "")
 	} else {
 		formatAccountValue(dbaccount)
+		tx := &models.Transaction{}
+		count, err := tx.Count("", address, -1, "", -1, -1)
+		if err != nil {
+			this.ReturnErrorMsg("Failed to get account tx count", "", "")
+			return
+		}
+		dbaccount.TxCount = uint64(count)
 		this.ReturnData(dbaccount, nil)
 	}
 }
