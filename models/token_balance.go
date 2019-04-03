@@ -48,7 +48,14 @@ func (t *TokenBalance) List(account, token, order string, offset, limit int, fie
 
 	var tokens []*TokenBalance
 	_, err := qs.Offset(offset).Limit(limit).All(&tokens, fields...)
-
+	for _, token := range tokens {
+		if token.Account != nil && token.Account.Address != "" {
+			o.Read(token.Account)
+		}
+		if token.Token != nil && token.Token.Address != "" {
+			o.Read(token.Token)
+		}
+	}
 	return tokens, err
 }
 
