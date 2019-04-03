@@ -46,7 +46,7 @@ func (this *NetController) Stats() {
 	}
 
 	acct := &models.Account{}
-	acctCount, err := acct.Count(-1, -1)
+	acctCount, err := acct.Count(0, -1)
 
 	node := &models.Node{}
 	superNode,err := node.Count(1)
