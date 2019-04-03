@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/astaxie/beego"
 	"github.com/vntchain/vnt-explorer/common"
+	"github.com/vntchain/vnt-explorer/common/utils"
 	"github.com/vntchain/vnt-explorer/models"
 )
 
@@ -56,6 +57,9 @@ func (this *TokenBalanceController) ListByToken() {
 			this.ReturnErrorMsg("Failed to list TokenBalance: %s", err.Error(), "")
 			return
 		}
+		for _, dbItem := range dbItemList {
+			formatTokenValue(dbItem)
+		}
 		this.ReturnData(dbItemList, count)
 	}
 }
@@ -88,6 +92,9 @@ func (this *TokenBalanceController) ListByAccount() {
 			this.ReturnErrorMsg("Failed to list TokenBalance: %s", err.Error(), "")
 			return
 		}
+		for _, dbItem := range dbItemList {
+			formatTokenValue(dbItem)
+		}
 		this.ReturnData(dbItemList, count)
 	}
 
@@ -114,5 +121,16 @@ func (this *TokenBalanceController) HolderCount() {
 		this.ReturnErrorMsg("Failed to get account token count: %s", err.Error(), "")
 	} else {
 		this.ReturnData(count, nil)
+	}
+}
+
+// convert token value to token unit
+func formatTokenValue(token *models.TokenBalance) {
+	if token.Token != nil {
+		formatAccountValue(token.Token)
+		token.Balance = utils.FormatValue(token.Balance, int(token.Token.TokenDecimals))
+	}
+	if token.Account != nil {
+		formatAccountValue(token.Account)
 	}
 }

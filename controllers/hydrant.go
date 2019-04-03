@@ -29,7 +29,10 @@ var (
 )
 
 var prv *ecdsa.PrivateKey
-var mutex sync.Mutex
+var addrLock sync.Mutex
+var nonceLock sync.Mutex
+var nonceErr error
+var nonce uint64
 
 type HydrantController struct {
 	BaseController
@@ -46,7 +49,7 @@ func getConfig() {
 		countErr = nil
 	}
 
-	if chainIdErr != nil{
+	if chainIdErr != nil {
 		hydrantChainId = common.DefaultHydrantChainId
 		chainIdErr = nil
 	}
@@ -82,14 +85,14 @@ func (this *HydrantController) SendVnt() {
 	address := vntCommon.HexToAddress(addr.Address)
 
 	// 如果有交易正在向该账户发送vnt，则返回
-	mutex.Lock()
+	addrLock.Lock()
 	if _, exists := addrMap[address.String()]; exists {
-		defer mutex.Unlock()
+		defer addrLock.Unlock()
 		this.ReturnErrorMsg("Sending vnt to %s! Please wait for a moment! ", addr.Address, common.ERROR_DUPLICATED_SEND)
 		return
 	}
 	addrMap[address.String()] = nil
-	mutex.Unlock()
+	addrLock.Unlock()
 
 	// get account from hydrant db
 	hydrant := getHydrant(address.String())
@@ -109,16 +112,25 @@ func (this *HydrantController) SendVnt() {
 	}
 
 	// get nonce
-	nonce, err := getNonce(hydrantFrom)
-	if err != nil {
-		this.ReturnErrorMsg("System error, get nonce: %s. Please contract developers.", err.Error(), common.ERROR_NONCE_ERROR)
-		deleteAddrMap(address.String())
-		return
+	var localNonce uint64
+	nonceLock.Lock()
+	if nonce == 0 || nonceErr != nil {
+		nonce, nonceErr = getNonce(hydrantFrom)
+		if nonceErr != nil {
+			defer nonceLock.Unlock()
+			this.ReturnErrorMsg("System error, get nonce: %s. Please contract developers.", err.Error(), common.ERROR_NONCE_ERROR)
+			deleteAddrMap(address.String())
+			return
+		}
+	} else {
+		nonce++
 	}
+	localNonce = nonce
+	nonceLock.Unlock()
 
 	// build transaction
 	amount := big.NewInt(1).Mul(big.NewInt(int64(hydrantCount)), big.NewInt(1e18))
-	tx := vntTypes.NewTransaction(nonce, address, amount, common.DefaultGasLimit, big.NewInt(common.DefaultGasPrice), nil)
+	tx := vntTypes.NewTransaction(localNonce, address, amount, common.DefaultGasLimit, big.NewInt(common.DefaultGasPrice), nil)
 	transaction, err := vntTypes.SignTx(tx, vntTypes.NewHubbleSigner(big.NewInt(int64(hydrantChainId))), prv)
 	data, err := vntRlp.EncodeToBytes(transaction)
 	if err != nil {
@@ -137,6 +149,7 @@ func (this *HydrantController) SendVnt() {
 	if err != nil {
 		this.ReturnErrorMsg("System error, sendRawTransaction %s. Please contract developers.", err.Error(), common.ERROR_TX_SEND_ERROR)
 		deleteAddrMap(address.String())
+		nonceErr = err
 		return
 	}
 
@@ -163,7 +176,6 @@ func updateHydrant(addr string, hydrant *models.Hydrant) {
 	if err := hydrant.InsertOrUpdate(); err != nil {
 		msg := fmt.Sprintf("Failed to update account: %s, error: %s", addr, err.Error())
 		beego.Error(msg)
-		panic(err)
 	}
 }
 
@@ -229,7 +241,7 @@ func checkTxReceipt(txHash string, addr string, hydrant *models.Hydrant) bool {
 }
 
 func deleteAddrMap(addr string) {
-	mutex.Lock()
+	addrLock.Lock()
 	delete(addrMap, addr)
-	mutex.Unlock()
+	addrLock.Unlock()
 }
