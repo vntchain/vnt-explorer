@@ -34,8 +34,7 @@ func makeCond(block string, account string, isToken int, start, end int64) *orm.
 
 	if len(account) > 0 && isToken != 1 {
 		cond2 := orm.NewCondition()
-		cond = cond.AndCond(cond2.Or("from", account).Or("to", account).
-			Or("token_to", account).Or("token_from", account).Or("contract_addr", account))
+		cond = cond.AndCond(cond2.Or("from", account).Or("to", account))
 	}
 
 	if isToken == 0 {
@@ -47,7 +46,7 @@ func makeCond(block string, account string, isToken int, start, end int64) *orm.
 			// only returns txs that token_to or token_from indicates the address
 			cond2 := orm.NewCondition()
 			cond = cond.AndCond(cond2.Or("token_to", account).
-				Or("token_from", account))
+				Or("token_from", account).Or("to", account))
 		}
 	}
 

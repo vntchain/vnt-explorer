@@ -437,15 +437,6 @@ func ExtractAcct(tx *models.Transaction) {
 				if a.IsToken {
 					beego.Info("Block:", tx.BlockNumber, ", will update token account:", to)
 					UpdateAccount(a, tx, ACC_TYPE_TOKEN, 1)
-
-					// Update the tx
-					tx.IsToken = true
-					err := tx.Update()
-					if err != nil {
-						msg := fmt.Sprintf("Failed to update transaction: %s, error: %s", tx.Hash, err.Error())
-						beego.Error(msg)
-						panic(msg)
-					}
 				} else if a.IsContract {
 					beego.Info("Block:", tx.BlockNumber, ", will update contract account:", to)
 					UpdateAccount(a, tx, ACC_TYPE_CONTRACT, 1)
@@ -507,14 +498,14 @@ func IsToken(addr string, tx *models.Transaction) (bool, *token.Erc20) {
 			Decimals:    decimals,
 		}
 
-		// Update the tx
-		tx.IsToken = true
-		err := tx.Update()
-		if err != nil {
-			msg := fmt.Sprintf("Failed to update transaction: %s, error: %s", tx.Hash, err.Error())
-			beego.Error(msg)
-			panic(msg)
-		}
+		//// Update the tx
+		//tx.IsToken = true
+		//err := tx.Update()
+		//if err != nil {
+		//	msg := fmt.Sprintf("Failed to update transaction: %s, error: %s", tx.Hash, err.Error())
+		//	beego.Error(msg)
+		//	panic(msg)
+		//}
 
 		return true, erc20
 	}
@@ -594,7 +585,7 @@ func UpdateAccount(account *models.Account, tx *models.Transaction, _type int, t
 		account.IsContract = true
 		account.ContractOwner = tx.From
 	} else if _type == ACC_TYPE_TOKEN {
-		tx.IsToken = true
+		//tx.IsToken = true
 		retAddrs = token.UpdateTokenBalance(account, tx)
 	}
 

@@ -66,8 +66,17 @@ func IsTransfer(tx *models.Transaction) bool {
 
 func UpdateTokenBalance(token *models.Account, tx *models.Transaction) []string {
 	if IsTransfer(tx) {
+
 		beego.Info("This is a token transfer transaction:", tx.Hash)
 		addrs := GetTransferAddrs(tx)
+
+		tx.IsToken = true
+		err := tx.Update()
+		if err != nil {
+			msg := fmt.Sprintf("Failed to update transaction: %s, error: %s", tx.Hash, err.Error())
+			beego.Error(msg)
+			panic(msg)
+		}
 		for _, addr := range addrs {
 			PostTokenTask(NewTokenTask(token, addr))
 		}
@@ -106,10 +115,12 @@ func GetTransferAddrs(tx *models.Transaction) (addrs []string) {
 			panic(msg)
 		}
 
-		addrs = append(addrs, tx.From, strings.ToLower(_input.To.String()))
+		tokenTo := strings.ToLower(_input.To.String())
+
+		addrs = append(addrs, tx.From, tokenTo)
 
 		tx.TokenFrom = tx.From
-		tx.TokenTo = _input.To.String()
+		tx.TokenTo = tokenTo
 		tx.TokenAmount = _input.Value.String()
 		break
 	case "transferFrom":
@@ -127,10 +138,12 @@ func GetTransferAddrs(tx *models.Transaction) (addrs []string) {
 			panic(msg)
 		}
 
-		addrs = append(addrs, tx.From, strings.ToLower(_input.From.String()), strings.ToLower(_input.To.String()))
+		tokenFrom := strings.ToLower(_input.From.String())
+		tokenTo := strings.ToLower(_input.To.String())
+		addrs = append(addrs, tx.From, tokenFrom, tokenTo)
 
-		tx.TokenFrom = _input.From.String()
-		tx.TokenTo = _input.To.String()
+		tx.TokenFrom = tokenFrom
+		tx.TokenTo = tokenTo
 		tx.TokenAmount = _input.Value.String()
 	}
 
