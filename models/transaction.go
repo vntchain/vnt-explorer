@@ -1,29 +1,29 @@
 package models
 
 import (
-	"github.com/astaxie/beego/orm"
 	"github.com/astaxie/beego"
+	"github.com/astaxie/beego/orm"
 )
 
 type Transaction struct {
-	Hash        	string `orm:"pk"`
-	TimeStamp   	uint64 `orm:"index"`
-	From        	string `orm:"index"`
-	To          	*Account `orm:"rel(fk);null"`
-	Value       	string
-	GasLimit    	uint64
-	GasPrice    	string
-	GasUsed     	uint64
-	Nonce       	uint64
-	Index       	int
-	Input       	string	`orm:"type(text)"`
-	Status			int
-	ContractAddr	string // when transaction is a contract creation
-	IsToken     	bool
-	TokenFrom     	string `orm:"index"`
-	TokenTo     	string `orm:"index"`
-	TokenAmount 	string
- 	BlockNumber 	uint64 `orm:"index"`
+	Hash         string   `orm:"pk"`
+	TimeStamp    uint64   `orm:"index"`
+	From         string   `orm:"index"`
+	To           *Account `orm:"rel(fk);null"`
+	Value        string
+	GasLimit     uint64
+	GasPrice     string
+	GasUsed      uint64
+	Nonce        uint64
+	Index        int
+	Input        string `orm:"type(text)"`
+	Status       int
+	ContractAddr string // when transaction is a contract creation
+	IsToken      bool
+	TokenFrom    string `orm:"index"`
+	TokenTo      string `orm:"index"`
+	TokenAmount  string
+	BlockNumber  uint64 `orm:"index"`
 }
 
 func makeCond(block string, account string, isToken int, start, end int64) *orm.Condition {
@@ -78,7 +78,7 @@ func (t *Transaction) List(offset, limit int64, order, block string, account str
 
 	beego.Info("block:", block, "account:", account, "istoken:", isToken)
 
-	qs := o.QueryTable(t).Offset(offset).Limit(limit);
+	qs := o.QueryTable(t).Offset(offset).Limit(limit)
 
 	cond := makeCond(block, account, isToken, start, end)
 
@@ -107,7 +107,9 @@ func (t *Transaction) Get(hash string, fields ...string) (*Transaction, error) {
 
 	t.Hash = hash
 	err = o.Read(t, "Hash")
-
+	if err == nil && t.To != nil && t.To.Address != "" {
+		o.Read(t.To)
+	}
 	return t, err
 }
 

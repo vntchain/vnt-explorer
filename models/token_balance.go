@@ -54,9 +54,15 @@ func (t *TokenBalance) List(account, token, order string, offset, limit int, fie
 
 func (t *TokenBalance) GetByAddr(account string, token string) (*TokenBalance, error) {
 	o := orm.NewOrm()
-	t.Account = &Account{Address:account}
-	t.Token = &Account{Address:token}
+	t.Account = &Account{Address: account}
+	t.Token = &Account{Address: token}
 	err := o.Read(t, "Account", "Token")
+	if err == nil && t.Account != nil && t.Account.Address != "" {
+		err = o.Read(t.Account)
+	}
+	if err == nil && t.Token != nil && t.Token.Address != "" {
+		err = o.Read(t.Token)
+	}
 	return t, err
 }
 
@@ -64,6 +70,12 @@ func (t *TokenBalance) GetById(id int) (*TokenBalance, error) {
 	o := orm.NewOrm()
 	t.Id = id
 	err := o.Read(t)
+	if err == nil && t.Account != nil && t.Account.Address != "" {
+		err = o.Read(t.Account)
+	}
+	if err == nil && t.Token != nil && t.Token.Address != "" {
+		err = o.Read(t.Token)
+	}
 	return t, err
 }
 

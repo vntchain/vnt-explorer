@@ -116,6 +116,5 @@ func formatAccountValue(account *models.Account) {
 	account.Balance = utils.FromWei(account.Balance)
 	if account.IsToken {
 		account.TokenAmount = utils.FormatValue(account.TokenAmount, int(account.TokenDecimals))
-		account.TokenAcctCount = utils.FormatValue(account.TokenAcctCount, int(account.TokenDecimals))
 	}
 }
