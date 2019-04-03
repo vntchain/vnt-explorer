@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/astaxie/beego"
 	"github.com/vntchain/vnt-explorer/common"
+	"github.com/vntchain/vnt-explorer/common/utils"
 	"github.com/vntchain/vnt-explorer/models"
 )
 
@@ -72,6 +73,9 @@ func (this *AccountController) List() {
 			this.ReturnErrorMsg("Failed to list accounts: %s", err.Error(), "")
 			return
 		}
+		for _, account := range accounts {
+			formatAccountValue(account)
+		}
 		this.ReturnData(accounts, count)
 	}
 
@@ -84,14 +88,13 @@ func (this *AccountController) Get() {
 		this.ReturnErrorMsg("Failed to get address", "", "")
 		return
 	}
-	// TODO 这边暂时未对fields进行处理
-	//fields := this.getFields()
 
 	account := &models.Account{}
 	dbaccount, err := account.Get(address)
 	if err != nil {
 		this.ReturnErrorMsg("Failed to read account: %s", err.Error(), "")
 	} else {
+		formatAccountValue(dbaccount)
 		this.ReturnData(dbaccount, nil)
 	}
 }
@@ -105,5 +108,14 @@ func (this *AccountController) Count() {
 		this.ReturnErrorMsg("Failed to get accounts count: %s", err.Error(), "")
 	} else {
 		this.ReturnData(count, nil)
+	}
+}
+
+// convert wei to vnt and token to token unit
+func formatAccountValue(account *models.Account) {
+	account.Balance = utils.FromWei(account.Balance)
+	if account.IsToken {
+		account.TokenAmount = utils.FormatValue(account.TokenAmount, int(account.TokenDecimals))
+		account.TokenAcctCount = utils.FormatValue(account.TokenAcctCount, int(account.TokenDecimals))
 	}
 }

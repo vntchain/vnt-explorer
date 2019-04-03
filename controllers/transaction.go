@@ -1,12 +1,14 @@
 package controllers
 
 import (
-	"github.com/vntchain/vnt-explorer/models"
 	"encoding/json"
-	"github.com/vntchain/vnt-explorer/common"
-	"github.com/astaxie/beego"
 	"strconv"
 	"time"
+
+	"github.com/astaxie/beego"
+	"github.com/vntchain/vnt-explorer/common"
+	"github.com/vntchain/vnt-explorer/common/utils"
+	"github.com/vntchain/vnt-explorer/models"
 )
 
 type TransactionController struct {
@@ -33,7 +35,7 @@ func (this *TransactionController) Post() {
 }
 
 func (this *TransactionController) List() {
-	offset, err := this.GetInt64("offset");
+	offset, err := this.GetInt64("offset")
 	if err != nil {
 		beego.Warn("Failed to read offset: ", err.Error())
 		offset = common.DefaultOffset
@@ -70,6 +72,9 @@ func (this *TransactionController) List() {
 			this.ReturnErrorMsg("Failed to list TokenBalance: %s", err.Error(), "")
 			return
 		}
+		for _, tx := range txs {
+			formatTxValue(tx)
+		}
 		this.ReturnData(txs, count)
 	}
 }
@@ -90,6 +95,7 @@ func (this *TransactionController) Get() {
 	if err != nil {
 		this.ReturnErrorMsg("Failed to read transaction: %s", err.Error(), "")
 	} else {
+		formatTxValue(dbTx)
 		this.ReturnData(dbTx, nil)
 	}
 }
@@ -132,11 +138,11 @@ func (this *TransactionController) History() {
 	}
 
 	type Item struct {
-		TimeStamp	int64
-		Year 		int
-		Month		int
-		Day			int
-		Count		int64
+		TimeStamp int64
+		Year      int
+		Month     int
+		Day       int
+		Count     int64
 	}
 
 	history := make([]Item, 0)
@@ -158,14 +164,13 @@ func (this *TransactionController) History() {
 		left := start
 		right := start.Add(during)
 
-
 		count, err := tx.Count("", "", -1, left.Unix(), right.Unix())
 		if err != nil {
 			this.ReturnErrorMsg("Failed to get transaction history: %s", err.Error(), "")
 			return
 		}
 
-		item := Item {
+		item := Item{
 			end.Unix(),
 			left.Year(),
 			int(left.Month()),
@@ -179,4 +184,16 @@ func (this *TransactionController) History() {
 	}
 
 	this.ReturnData(history, nil)
+}
+
+// convert wei to vnt and token to token unit
+func formatTxValue(tx *models.Transaction) {
+	tx.Value = utils.FromWei(tx.Value)
+	tx.GasPrice = utils.FromWei(tx.GasPrice)
+	if tx.To != nil {
+		formatAccountValue(tx.To)
+		if tx.To.IsToken {
+			tx.TokenAmount = utils.FormatValue(tx.TokenAmount, int(tx.To.TokenDecimals))
+		}
+	}
 }
