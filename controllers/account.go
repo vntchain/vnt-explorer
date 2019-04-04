@@ -73,7 +73,14 @@ func (this *AccountController) List() {
 			this.ReturnErrorMsg("Failed to list accounts: %s", err.Error(), "")
 			return
 		}
+		tx := &models.Transaction{}
 		for _, account := range accounts {
+			c, err := tx.Count("", account.Address, -1, "", -1, -1)
+			if err != nil {
+				this.ReturnErrorMsg("Failed to get tx count for account: %s", err.Error(), "")
+				return
+			}
+			account.TxCount = uint64(c)
 			formatAccountValue(account)
 		}
 		this.ReturnData(accounts, count)
