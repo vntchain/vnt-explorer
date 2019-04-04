@@ -303,7 +303,7 @@ func PersistBlock(number int64) {
 		tx.TimeStamp = block.TimeStamp
 		beego.Info("Got transaction: ", tx)
 
-		PostTxTask(NewTxTask(tx))
+		//PostTxTask(NewTxTask(tx))
 
 		beego.Info("Will extract accounts from transaction: ", tx.Hash)
 		PostExtractAccountTask(NewExtractAccountTask(tx))
@@ -428,40 +428,39 @@ func ExtractAcct(tx *models.Transaction) {
 	}
 
 	if to != nil && to.Address != "" {
-		if _, ok := AccountMap.Load(to.Address); !ok {
-			AccountMap.Store(to.Address, 0)
-			if a := GetAccount(to.Address); a == nil {
-				beego.Info("Block:", tx.BlockNumber, ", will insert normal account:", to)
-				NewAccount(to.Address, tx, ACC_TYPE_NORMAL, 1)
+		if a := GetAccount(to.Address); a == nil {
+			beego.Info("Block:", tx.BlockNumber, ", will insert normal account:", to)
+			NewAccount(to.Address, tx, ACC_TYPE_NORMAL, 1)
+		} else {
+			if a.IsToken {
+				beego.Info("Block:", tx.BlockNumber, ", will update token account:", to)
+				UpdateAccount(a, tx, ACC_TYPE_TOKEN, 1)
+			} else if a.IsContract {
+				beego.Info("Block:", tx.BlockNumber, ", will update contract account:", to)
+				UpdateAccount(a, tx, ACC_TYPE_CONTRACT, 1)
 			} else {
-				if a.IsToken {
-					beego.Info("Block:", tx.BlockNumber, ", will update token account:", to)
-					UpdateAccount(a, tx, ACC_TYPE_TOKEN, 1)
-				} else if a.IsContract {
-					beego.Info("Block:", tx.BlockNumber, ", will update contract account:", to)
-					UpdateAccount(a, tx, ACC_TYPE_CONTRACT, 1)
-				} else {
+				if _, ok := AccountMap.Load(to.Address); !ok {
+					AccountMap.Store(to.Address, 0)
 					beego.Info("Block:", tx.BlockNumber, ", will update normal account:", from)
 					UpdateAccount(a, tx, ACC_TYPE_NORMAL, 1)
 				}
 			}
 		}
 	} else if contractAddr != "" { // this case is for contract creation
-		if isContract, ok := AccountMap.Load(contractAddr); !ok || isContract == 0 {
-			AccountMap.Store(contractAddr, 1)
-			if a := GetAccount(contractAddr); a == nil {
-				// new contract account
-				beego.Info("Block:", tx.BlockNumber, ", will insert contract account:", contractAddr)
-				NewAccount(contractAddr, tx, ACC_TYPE_CONTRACT, 0)
-			} else if !a.IsContract {
-				// this account already exists as a normal account,
-				// will change it to a contract account
-				//a.IsContract = true
-				beego.Info("Block:", tx.BlockNumber, ", will update contract account:", contractAddr)
-				UpdateAccount(a, tx, ACC_TYPE_CONTRACT, 0)
-			}
+		if a := GetAccount(contractAddr); a == nil {
+			// new contract account
+			beego.Info("Block:", tx.BlockNumber, ", will insert contract account:", contractAddr)
+			NewAccount(contractAddr, tx, ACC_TYPE_CONTRACT, 0)
+		} else if !a.IsContract {
+			// this account already exists as a normal account,
+			// will change it to a contract account
+			//a.IsContract = true
+			beego.Info("Block:", tx.BlockNumber, ", will update contract account:", contractAddr)
+			UpdateAccount(a, tx, ACC_TYPE_CONTRACT, 0)
 		}
 	}
+
+	PostTxTask(NewTxTask(tx))
 	return
 }
 
