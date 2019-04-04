@@ -6,8 +6,8 @@ import (
 
 type TokenBalance struct {
 	Id      int
-	Account *Account `orm:"rel(fk)"`
-	Token   *Account `orm:"rel(fk)"`
+	Account *Account `orm:"rel(fk);index"`
+	Token   *Account `orm:"rel(fk);index"`
 	Balance string   `orm:"index"`
 	Percent float32
 }

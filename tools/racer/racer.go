@@ -59,6 +59,7 @@ func doSync() {
 }
 
 func Wait() {
+	var wait = 3
 	for {
 		blockQueued, blockActive := data.BlockPool.Routines()
 		blockInsertPoolQ, blockInsertPoolA := data.BlockInsertPool.Routines()
@@ -84,12 +85,20 @@ func Wait() {
 			accoutQueued + accountActive == 0 &&
 			witQueued + witActive == 0 &&
 			nodeQueded + nodeActive == 0 {
-			data.AccountMap = sync.Map{}
-			token.TokenMap = sync.Map{}
+				if wait == 0 {
+					data.AccountMap = sync.Map{}
+					token.TokenMap = sync.Map{}
+					break
+				} else {
+					wait --
+					time.Sleep(500 * time.Millisecond)
+					continue
+				}
+
 			//time.Sleep(1 * time.Second)
-			break
 		}
 
+		wait = 3
 		time.Sleep(500 * time.Millisecond)
 	}
 }

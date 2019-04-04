@@ -9,7 +9,7 @@ type Transaction struct {
 	Hash         string   `orm:"pk"`
 	TimeStamp    uint64   `orm:"index"`
 	From         string   `orm:"index"`
-	To           *Account `orm:"rel(fk);null"`
+	To           *Account `orm:"rel(fk);null;index"`
 	Value        string
 	GasLimit     uint64
 	GasPrice     string
@@ -19,7 +19,7 @@ type Transaction struct {
 	Input        string `orm:"type(text)"`
 	Status       int
 	ContractAddr string // when transaction is a contract creation
-	IsToken      bool
+	IsToken      bool	`orm:"index"`
 	TokenFrom    string `orm:"index"`
 	TokenTo      string `orm:"index"`
 	TokenAmount  string
