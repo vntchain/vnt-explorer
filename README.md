@@ -49,31 +49,40 @@ count = 100
 # 发币间隔，同一个账号在这个间隔内只能发一次币
 interval = 3600
 # 测试网的chianid
-chainId = 0
+chainId = 2
 
 ```
 
 ## 安装依赖
 ```
-cd vnt-explorer
-go get github.com/astaxie/beego
-go get github.com/beego/bee
-go get github.com/go-sql-driver/mysql
-go get github.com/bluele/gcache
-go get github.com/vntchain/go-vnt
+$ cd vnt-explorer
+$ go get github.com/astaxie/beego
+$ go get github.com/beego/bee
+$ go get github.com/go-sql-driver/mysql
+$ go get github.com/bluele/gcache
+$ go get github.com/vntchain/go-vnt
 
 # 切换一下beego依赖的分支
-cd $GOPATH/src/github.com/astaxie/beego
-git checkout -b v1.11.1 v1.11.1
-cd -
+$ cd $GOPATH/src/github.com/astaxie/beego
+$ git checkout -b v1.11.1 v1.11.1
+$ cd -
 ```
 
-## 运行浏览器后端
+### 编译代码
+```bash
+$ ./build.sh
+```
+编译完成后，目录下会多出一个`bin/`目录，分别包含了三个可执行文件：
+* dbsync 数据库初始化命令，用于初始化表格
+* racer 数据同步命令，用于将区块链中的数据同步到mysql数据库中
+* vnt-explorer 浏览器后端服务，用于开启后端服务
+
+## 运行浏览器后端进程
 
 该后端为前端提供接口
 
 ```
-bee run
+$ nohup ./bin/vnt-explorer > vnt-explorer.log 2>&1 &
 ```
 
 ## 测试
@@ -86,8 +95,10 @@ GET /v1/blocks
 该模块会连接go-vnt节点，并将数据同步到mysql数据库中
 
 ```
-# 初始化数据库表
-go run tools/dbsync/sync.go
-# 同步数据
-go run tools/racer/racer.go
+# 初始化数据库表，只需要在初始化时运行一次即可，此命令慎用
+$ ./bin/vnt-explorer
+```
+# 开启同步数据进程
+```
+$ nohup ./bin/racer > racer.log 2>&1 &
 ```
