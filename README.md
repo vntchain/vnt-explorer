@@ -96,7 +96,7 @@ GET /v1/blocks
 
 ```
 # 初始化数据库表，只需要在初始化时运行一次即可，此命令慎用
-$ ./bin/vnt-explorer
+$ ./bin/dbsync
 ```
 # 开启同步数据进程
 ```
