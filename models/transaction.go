@@ -15,7 +15,7 @@ type Transaction struct {
 	GasPrice     string
 	GasUsed      uint64
 	Nonce        uint64
-	Index        int
+	Index        int	`orm:"index"`
 	Input        string `orm:"type(text)"`
 	Status       int
 	ContractAddr string // when transaction is a contract creation
