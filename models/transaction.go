@@ -92,9 +92,9 @@ func (t *Transaction) List(offset, limit int64, order, block string, account str
 	qs = qs.SetCond(cond)
 
 	if order == "asc" {
-		qs = qs.OrderBy("TimeStamp")
+		qs = qs.OrderBy("TimeStamp", "Index")
 	} else {
-		qs = qs.OrderBy("-TimeStamp")
+		qs = qs.OrderBy("-TimeStamp", "-Index")
 	}
 
 	var txs []*Transaction

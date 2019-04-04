@@ -11,11 +11,11 @@ import (
 
 var BlockPool = pool.New(runtime.NumCPU() * 3, 50)
 var BlockInsertPool = pool.New(runtime.NumCPU() * 3, 50)
-var TxPool = pool.New(runtime.NumCPU() * 3, 3000)
-var AccountExtractPool = pool.New(runtime.NumCPU() * 3, 3000)
+var TxPool = pool.New(runtime.NumCPU() * 3, 6000)
+var AccountExtractPool = pool.New(runtime.NumCPU() * 3, 6000)
 var AccountPool = pool.New(runtime.NumCPU() * 3, 10000)
-var WitnessesPool = pool.New(runtime.NumCPU() * 3, 20)
-var NodePool = pool.New(runtime.NumCPU() * 3, 10)
+var WitnessesPool = pool.New(runtime.NumCPU() * 3, 100)
+var NodePool = pool.New(runtime.NumCPU() * 3, 100)
 
 type BlockTask struct {
 	pool.BasicTask
@@ -125,7 +125,7 @@ func (this *AccountTask) DoWork(workRoutine int) {
 	switch this.Action {
 	case ACTION_INSERT:
 		if err := this.Account.Insert(); err != nil {
-			msg := fmt.Sprintf("Failed to insert account: %v, error: %s", this.Account.Address, err.Error())
+			msg := fmt.Sprintf("Failed to insert account: %v, error: %s", this.Account, err.Error())
 			beego.Error(msg)
 			panic(msg)
 		}

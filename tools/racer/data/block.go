@@ -581,9 +581,10 @@ func UpdateAccount(account *models.Account, tx *models.Transaction, _type int, t
 				account.TokenAcctCount = "0"
 				account.TokenLogo = ""
 			}
+
+			account.IsContract = true
+			account.ContractOwner = tx.From
 		}
-		account.IsContract = true
-		account.ContractOwner = tx.From
 	} else if _type == ACC_TYPE_TOKEN {
 		//tx.IsToken = true
 		retAddrs = token.UpdateTokenBalance(account, tx)
