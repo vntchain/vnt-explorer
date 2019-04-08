@@ -408,10 +408,6 @@ func GetTx(txMap map[string]interface{}) *models.Transaction {
 
 // Extract Account from a transaction
 func ExtractAcct(tx *models.Transaction) {
-
-	if tx.Status == 0 {
-		return
-	}
 	from := tx.From
 	to := tx.To
 	contractAddr := tx.ContractAddr
