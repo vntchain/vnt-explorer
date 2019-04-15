@@ -2,12 +2,40 @@ package data
 
 import (
 	"github.com/astaxie/beego"
+	"github.com/pkg/errors"
 	"github.com/vntchain/vnt-explorer/common"
 	"github.com/vntchain/vnt-explorer/common/utils"
 	"github.com/vntchain/vnt-explorer/models"
+
+	"encoding/json"
+	"io"
+	"io/ioutil"
 	"math/big"
+	"net/http"
+	"os"
+	"path"
 	"strings"
 )
+
+type BpInfo struct {
+	Org Org
+}
+
+type Org struct {
+	Candidate_Name string
+	Location       Location
+	Branding       Branding
+}
+type Location struct {
+	Latitude  float64
+	Longitude float64
+}
+
+type Branding struct {
+	Logo_256  string
+	Logo_1024 string
+	Logo_Svg  string
+}
 
 func GetNodes() []*models.Node {
 	rpc := common.NewRpc()
@@ -25,7 +53,7 @@ func GetNodes() []*models.Node {
 
 	if resp.Result != nil {
 		nodeList := resp.Result.([]interface{})
-		totalVotes := big.NewInt(0);
+		totalVotes := big.NewInt(0)
 
 		beego.Info("Response body", resp)
 
@@ -77,11 +105,11 @@ func GetNodes() []*models.Node {
 				Ip:              ip,
 				Status:          status,
 				Votes:           votes.String(),
-				VotesFloat:		 float64(votes.Uint64()),
+				VotesFloat:      float64(votes.Uint64()),
 				TotalBounty:     totalBounty.String(),
 				ExtractedBounty: extractedBounty.String(),
 				LastExtractTime: lastExtractTime.String(),
-				IsAlive: 1,
+				IsAlive:         1,
 			}
 			result = append(result, &nodeValue)
 		}
@@ -96,4 +124,68 @@ func GetNodes() []*models.Node {
 	}
 
 	return result
+}
+
+func GetBpInfo(website string) (bp *BpInfo) {
+	resp, err := http.Get(website)
+
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+
+	if err != nil {
+		beego.Error("Failed to get bp.json from node's website: %s", err.Error())
+		return
+	}
+
+	bp = &BpInfo{}
+	err = json.Unmarshal(body, bp)
+	if err != nil {
+		beego.Error("Failed to unmarshal bpInfo: %s", err.Error())
+		return
+	}
+
+	return
+}
+
+func GetLogo(imgUrl, address string) {
+	imgName := path.Base(imgUrl)
+	imgDir := path.Join(common.IMAGE_PATH, address)
+	imgPath := path.Join(imgDir, imgName)
+	if exists, _, _ := FileExists(imgPath); exists {
+		return
+	}
+	if exists, _, _ := FileExists(imgDir); !exists {
+		err := os.MkdirAll(imgDir, 0711)
+		if err != nil {
+			beego.Error("Failed to create image dir: %s", imgDir)
+		}
+	}
+	res, err := http.Get(imgUrl)
+	if err != nil {
+		beego.Error("Failed to download logo of %s: %s", address, err.Error())
+		return
+	}
+	defer res.Body.Close()
+
+	file, err := os.Create(imgPath)
+	if err != nil {
+		beego.Error("Failed to create logo file of %s: %s", address, err.Error())
+		return
+	}
+
+	_, err = io.Copy(file, res.Body)
+	if err != nil {
+		beego.Error("Failed to write logo of %s: %s", address, err.Error())
+	}
+}
+
+func FileExists(filePath string) (bool, int64, error) {
+	fileInfo, err := os.Stat(filePath)
+	if os.IsNotExist(err) {
+		return false, 0, nil
+	}
+	if err != nil {
+		return false, 0, errors.Wrapf(err, "error checking if file [%s] exists", filePath)
+	}
+	return true, fileInfo.Size(), nil
 }

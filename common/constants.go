@@ -12,6 +12,7 @@ const (
 	DefaultNodeStatus      = -1
 	VNT_TOTAL              = "10000000000000000000000000000"
 	VNT_DECIMAL            = 18
+	IMAGE_PATH             = "static/image/"
 )
 
 const (
