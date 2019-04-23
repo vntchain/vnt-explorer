@@ -1,14 +1,14 @@
 package utils
 
 import (
-	"github.com/vntchain/vnt-explorer/common"
-	"encoding/json"
 	"bytes"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/astaxie/beego"
-	"net/http"
+	"github.com/vntchain/vnt-explorer/common"
 	"io/ioutil"
-	"errors"
+	"net/http"
 )
 
 var rpcHost = beego.AppConfig.String("node::rpc_host")
@@ -23,12 +23,18 @@ func CallRpc(rpc *common.Rpc) (error, *common.Response, *common.Error) {
 	if err != nil {
 		msg := fmt.Sprint("Failed to parse rpc %s", err.Error())
 		beego.Error(msg)
-		panic(msg)
+		return errors.New(msg), nil, nil
 	}
 
 	beego.Info("Will call rpc with request: ", buf.String())
 
 	resp, err := http.Post(rpcApi, common.H_ContentType, buf)
+
+	if resp == nil || resp.Body == nil {
+		msg := fmt.Sprintf("Failed to get resp body")
+		beego.Error(msg)
+		return errors.New(msg), nil, nil
+	}
 
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
@@ -37,7 +43,6 @@ func CallRpc(rpc *common.Rpc) (error, *common.Response, *common.Error) {
 		msg := fmt.Sprintf("Failed to read response body: %s", err.Error())
 		beego.Error(msg)
 		return errors.New(msg), nil, nil
-		//panic(msg)
 	}
 
 	obj := new(common.Response)
