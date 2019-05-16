@@ -22,6 +22,7 @@ func registerModel() {
 	orm.RegisterModel(new(models.TokenBalance))
 	orm.RegisterModel(new(models.Transaction))
 	orm.RegisterModel(new(models.Hydrant))
+	orm.RegisterModel(new(models.MarketInfo))
 }
 
 func alterTable() {

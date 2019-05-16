@@ -35,4 +35,7 @@ func init() {
 	beego.Router("/v1/search/:keyword", &controllers.SearchController{}, "get:Search")
 
 	beego.Router("/v1/hydrant", &controllers.HydrantController{}, "post:SendVnt")
+
+	beego.Router("/v1/kline",&controllers.MarketController{},"get:History")
+	beego.Router("/v1/market",&controllers.MarketController{},"get:Market")
 }
