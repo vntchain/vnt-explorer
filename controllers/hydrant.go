@@ -118,7 +118,7 @@ func (this *HydrantController) SendVnt() {
 		nonce, nonceErr = getNonce(hydrantFrom)
 		if nonceErr != nil {
 			defer nonceLock.Unlock()
-			this.ReturnErrorMsg("System error, get nonce: %s. Please contract developers.", err.Error(), common.ERROR_NONCE_ERROR)
+			this.ReturnErrorMsg("System error, get nonce: %s. Please contract developers.", nonceErr.Error(), common.ERROR_NONCE_ERROR)
 			deleteAddrMap(address.String())
 			return
 		}
