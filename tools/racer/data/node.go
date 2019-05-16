@@ -2,12 +2,13 @@ package data
 
 import (
 	"github.com/astaxie/beego"
-	"github.com/pkg/errors"
 	"github.com/vntchain/vnt-explorer/common"
 	"github.com/vntchain/vnt-explorer/common/utils"
 	"github.com/vntchain/vnt-explorer/models"
 
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"math/big"
@@ -185,7 +186,8 @@ func FileExists(filePath string) (bool, int64, error) {
 		return false, 0, nil
 	}
 	if err != nil {
-		return false, 0, errors.Wrapf(err, "error checking if file [%s] exists", filePath)
+		msg := fmt.Sprintf("error [%s] checking if file [%s] exists", err, filePath)
+		return false, 0, errors.New(msg)
 	}
 	return true, fileInfo.Size(), nil
 }
