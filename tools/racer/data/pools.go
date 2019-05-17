@@ -207,6 +207,15 @@ func (this *NodesTask) DoWork(workRoutine int) {
 		}
 		dbNode := &models.Node{}
 		dbNode.Get(node.Address)
+
+		// register account's Vname
+		account := &models.Account{}
+		account, err := account.Get(node.Address)
+		if err == nil {
+			account.Vname = node.Vname
+			account.Insert()
+		}
+
 		// new node or node's home update, or node's location is unknown
 		// try to get nodeInfo otherwise copy the old data
 		if dbNode == nil {

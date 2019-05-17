@@ -9,17 +9,18 @@ type Transaction struct {
 	Hash         string   `orm:"pk"`
 	TimeStamp    uint64   `orm:"index"`
 	From         string   `orm:"index"`
+	FromDetail   *Account `orm:"-"`
 	To           *Account `orm:"rel(fk);null;index"`
 	Value        string
 	GasLimit     uint64
 	GasPrice     string
 	GasUsed      uint64
 	Nonce        uint64
-	Index        int	`orm:"index"`
+	Index        int    `orm:"index"`
 	Input        string `orm:"type(text)"`
 	Status       int
 	ContractAddr string // when transaction is a contract creation
-	IsToken      bool	`orm:"index"`
+	IsToken      bool   `orm:"index"`
 	TokenFrom    string `orm:"index"`
 	TokenTo      string `orm:"index"`
 	TokenAmount  string
@@ -103,6 +104,12 @@ func (t *Transaction) List(offset, limit int64, order, block string, account str
 		if tx.To != nil && tx.To.Address != "" {
 			o.Read(tx.To)
 		}
+		if tx.From != "" {
+			tx.FromDetail = &Account{
+				Address: tx.From,
+			}
+			o.Read(tx.FromDetail)
+		}
 	}
 	return txs, err
 }
@@ -114,8 +121,17 @@ func (t *Transaction) Get(hash string, fields ...string) (*Transaction, error) {
 
 	t.Hash = hash
 	err = o.Read(t, "Hash")
-	if err == nil && t.To != nil && t.To.Address != "" {
+	if err != nil {
+		return t, err
+	}
+	if t.To != nil && t.To.Address != "" {
 		o.Read(t.To)
+	}
+	if t.From != "" {
+		t.FromDetail = &Account{
+			Address: t.From,
+		}
+		o.Read(t.FromDetail)
 	}
 	return t, err
 }

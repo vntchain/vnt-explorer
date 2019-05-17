@@ -1,11 +1,11 @@
 package models
 
 import (
+	"fmt"
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/orm"
-	"strings"
 	"strconv"
-	"fmt"
+	"strings"
 )
 
 type ErrorBlockNumber struct {
@@ -18,19 +18,20 @@ func (e ErrorBlockNumber) Error() string {
 }
 
 type Block struct {
-	Number       uint64 `orm:"pk"`
-	TimeStamp    uint64
-	TxCount      int
-	Hash         string   `orm:"unique"`
-	ParentHash   string
-	Producer     string  `orm:"index"`
-	Size         string
-	GasUsed      uint64
-	GasLimit     uint64
-	BlockReward  string
-	ExtraData    string
-	Tps			 float32
-	Witnesses    []*Node        `orm:"rel(m2m)"`
+	Number         uint64 `orm:"pk"`
+	TimeStamp      uint64
+	TxCount        int
+	Hash           string `orm:"unique"`
+	ParentHash     string
+	Producer       string `orm:"index"`
+	ProducerDetail *Node  `orm:"-"`
+	Size           string
+	GasUsed        uint64
+	GasLimit       uint64
+	BlockReward    string
+	ExtraData      string
+	Tps            float32
+	Witnesses      []*Node `orm:"rel(m2m)"`
 }
 
 func (b *Block) Insert() error {
@@ -57,6 +58,14 @@ func (b *Block) List(offset, limit int64, order string, fields ...string) ([]*Bl
 
 	var blocks []*Block
 	_, err := qs.Offset(offset).Limit(limit).All(&blocks, fields...)
+	for _, b := range blocks {
+		if b.Producer != "" {
+			b.ProducerDetail = &Node{
+				Address: b.Producer,
+			}
+			o.Read(b.ProducerDetail)
+		}
+	}
 	return blocks, err
 }
 
@@ -72,13 +81,18 @@ func (b *Block) Get(nOrh string, fields ...string) (*Block, error) {
 		beego.Info("Will read block by number: ", nOrh)
 		b.Number, err = strconv.ParseUint(nOrh, 10, 64)
 		if err != nil {
-			e := ErrorBlockNumber {"Wrong block number: %s", nOrh}
+			e := ErrorBlockNumber{"Wrong block number: %s", nOrh}
 			beego.Error(e.Error())
 			return nil, e
 		}
 		err = o.Read(b, "Number")
 	}
-
+	if err == nil && b.Producer != "" {
+		b.ProducerDetail = &Node{
+			Address: b.Producer,
+		}
+		o.Read(b.ProducerDetail)
+	}
 	return b, err
 }
 
