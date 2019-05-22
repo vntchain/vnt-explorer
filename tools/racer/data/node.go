@@ -10,7 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"math/big"
 	"net/http"
 	"os"
@@ -128,21 +127,16 @@ func GetNodes() []*models.Node {
 }
 
 func GetBpInfo(website string) (bp *BpInfo) {
-	resp, err := http.Get(website)
-
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-
+	body, err := utils.CallApi(website, nil)
 	if err != nil {
-		beego.Error("Failed to get bp.json from node's website: %s", err.Error())
-		return
+		return nil
 	}
 
 	bp = &BpInfo{}
 	err = json.Unmarshal(body, bp)
 	if err != nil {
 		beego.Error("Failed to unmarshal bpInfo: %s", err.Error())
-		return
+		return nil
 	}
 
 	return
@@ -166,8 +160,11 @@ func GetLogo(imgUrl, address string) {
 		beego.Error("Failed to download logo of %s: %s", address, err.Error())
 		return
 	}
-	defer res.Body.Close()
+	if res == nil || res.Body == nil {
+		return
+	}
 
+	defer res.Body.Close()
 	file, err := os.Create(imgPath)
 	if err != nil {
 		beego.Error("Failed to create logo file of %s: %s", address, err.Error())
