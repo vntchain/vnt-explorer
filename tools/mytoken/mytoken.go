@@ -2,13 +2,13 @@ package main
 
 import (
 	"encoding/json"
-	"strconv"
+	"fmt"
 	"github.com/astaxie/beego"
+	"github.com/vntchain/vnt-explorer/common"
 	"github.com/vntchain/vnt-explorer/common/utils"
 	"github.com/vntchain/vnt-explorer/models"
-	"github.com/vntchain/vnt-explorer/common"
+	"strconv"
 	"time"
-	"fmt"
 )
 
 const MYTOKENAPI = "https://api.mytokenapi.com/currency/currencydetail"
@@ -35,12 +35,15 @@ type TokenInfoResp struct {
 type mytokenInfo struct {
 	Name                 string  `json:"name"`
 	Rank                 int     `json:"rank"`
-	MarketCapDisplayCny  float64 `json:"market_cap_display_cny"`
+	MarketCapDisplayCNY  float64 `json:"market_cap_display_cny"`
+	MarketCapUSD         string  `json:"market_cap_usd"`
 	PriceDisplayCNY      float64 `json:"price_display_cny"`
+	PriceUsd             float64 `json:"price_usd"`
 	PercentChangeDisplay string  `json:"percent_change_display"`
 	PercentChangeUtc0    float64 `json:"percent_change_utc0"`
-	AvaliableSupply      float64 `json:"available_supply"`
+	AvailableSupply      float64 `json:"available_supply"`
 	Volume24hCNY         string  `json:"volume_24h"`
+	Volume24hUSD         string  `json:"volume_24h_usd"`
 	Volume24h            float64 `json:"volume_24h_from"`
 }
 
@@ -48,7 +51,7 @@ func GetCoinAndInsertDB() {
 	respBody, err := utils.CallApi(MYTOKENAPI, params)
 	var res TokenInfoResp
 	if err = json.Unmarshal(respBody, &res); err != nil {
-		msg := fmt.Sprintf("json unmarshal err: %s, respBody: %s\n", err,string(respBody))
+		msg := fmt.Sprintf("json unmarshal err: %s, respBody: %s\n", err, string(respBody))
 		beego.Error(msg)
 		return
 	}
@@ -56,18 +59,31 @@ func GetCoinAndInsertDB() {
 		beego.Error("Get token info is nil")
 		return
 	}
+
 	volCny, err := strconv.ParseFloat(res.Data.Volume24hCNY, 10)
 	if err != nil {
 		volCny = 0.0
+	}
+	volUsd, err := strconv.ParseFloat(res.Data.Volume24hUSD, 10)
+	if err != nil {
+		volUsd = 0.0
+	}
+
+	capUsd, err := strconv.ParseFloat(res.Data.MarketCapUSD, 10)
+	if err != nil {
+		capUsd = 0.0
 	}
 
 	coin := models.MarketInfo{
 		LastUpdated:      res.TimeStamp,
 		PriceCny:         res.Data.PriceDisplayCNY,
-		AvailableSupply:  res.Data.AvaliableSupply,
+		PriceUsd:         res.Data.PriceUsd,
+		AvailableSupply:  res.Data.AvailableSupply,
 		Volume24h:        res.Data.Volume24h,
 		Volume24hCny:     volCny,
-		MarketCapCny:     res.Data.MarketCapDisplayCny,
+		Volume24hUsd:     volUsd,
+		MarketCapCny:     res.Data.MarketCapDisplayCNY,
+		MarketCapUsd:     capUsd,
 		PercentChange24h: res.Data.PercentChangeUtc0,
 	}
 	coin.Insert()

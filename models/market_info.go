@@ -8,10 +8,13 @@ type MarketInfo struct {
 	Id               int
 	LastUpdated      int64 `orm:"index"`
 	PriceCny         float64
+	PriceUsd         float64
 	AvailableSupply  float64
 	Volume24h        float64
 	Volume24hCny     float64
+	Volume24hUsd     float64
 	MarketCapCny     float64
+	MarketCapUsd     float64
 	PercentChange24h float64
 }
 
