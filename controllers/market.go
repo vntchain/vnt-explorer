@@ -33,7 +33,8 @@ func (this *MarketController) History() {
 		Year      int
 		Month     int
 		Day       int
-		Price     float64
+		PriceCny  float64
+		PriceUsd  float64
 		Volume    float64
 	}
 
@@ -53,7 +54,7 @@ func (this *MarketController) History() {
 	market := &models.MarketInfo{}
 
 	for ; end.Unix() >= start.Unix(); start = start.Add(during) {
-		marketInfo, err := market.Get(start.Unix(),"lte")
+		marketInfo, err := market.Get(start.Unix(), "lte")
 		if err != nil {
 			this.ReturnErrorMsg("Failed to get market history: %s", err.Error(), "")
 			return
@@ -72,6 +73,7 @@ func (this *MarketController) History() {
 			int(start.Month()),
 			start.Day(),
 			marketInfo.PriceCny,
+			marketInfo.PriceUsd,
 			marketInfo.Volume24h,
 		}
 
@@ -85,10 +87,10 @@ func (this *MarketController) History() {
 func (this *MarketController) Market() {
 	now := time.Now()
 	market := &models.MarketInfo{}
-	marketInfo, err := market.Get(now.Unix(),"lte")
-	if err != nil{
+	marketInfo, err := market.Get(now.Unix(), "lte")
+	if err != nil {
 		this.ReturnErrorMsg("Failed to get market info: %s", err.Error(), "")
 		return
 	}
-	this.ReturnData(marketInfo,nil)
+	this.ReturnData(marketInfo, nil)
 }
