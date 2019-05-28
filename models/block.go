@@ -29,6 +29,8 @@ type Block struct {
 	GasUsed        uint64
 	GasLimit       uint64
 	BlockReward    string
+	Reward		   float64
+	Fee			   float64
 	ExtraData      string
 	Tps            float32
 	Witnesses      []*Node `orm:"rel(m2m)"`

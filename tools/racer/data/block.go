@@ -342,6 +342,8 @@ func PersistBlock(number int64) {
 
 	result := staticReward + dynamicReward
 	block.BlockReward = fmt.Sprintf("%f VNT (%f + %f)", result, staticReward, dynamicReward)
+	block.Reward = staticReward
+	block.Fee = dynamicReward
 	// beego.Info("---------> block.BlockReward == ", block.BlockReward)
 
 	PostInsertBlockTask(NewBlockInsertTask(block))
