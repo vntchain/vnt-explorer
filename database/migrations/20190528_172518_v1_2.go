@@ -20,7 +20,7 @@ func init() {
 // Run the migrations
 func (m *V12_20190528_172518) Up() {
 	// use m.SQL("CREATE TABLE ...") to make schema update
-	m.SQL("ALTER TABLE BLOCK " +
+	m.SQL("ALTER TABLE `block` " +
 		"ADD COLUMN `reward` double NOT NULL DEFAULT '0', " +
 		"ADD COLUMN `fee` double NOT NULL DEFAULT '0';")
 	m.SQL("CREATE TABLE if not exists `market_info` (" +
@@ -43,7 +43,7 @@ func (m *V12_20190528_172518) Up() {
 // Reverse the migrations
 func (m *V12_20190528_172518) Down() {
 	// use m.SQL("DROP TABLE ...") to reverse schema update
-	m.SQL("ALTER TABLE `BLOCK` " +
+	m.SQL("ALTER TABLE `block` " +
 		"DROP COLUMN `reward`, " +
 		"DROP COLUMN `fee`;")
 	m.SQL("DROP TABLE if exists `market_info`")
