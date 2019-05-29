@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"github.com/vntchain/vnt-explorer/models"
 	"time"
 )
@@ -11,21 +12,30 @@ type SubscribeController struct {
 
 func (this *SubscribeController) Subscribe() {
 	email := this.GetString("email")
-	subscription := &models.Subscription{
-		Email: email,
-	}
-	info, err := subscription.Get(email)
-	if err == nil && info != nil {
-		this.ReturnData(info, nil)
-		return
-	}
-
 	now := time.Now()
-	subscription.TimeStamp = uint64(now.Unix())
-	if err = subscription.Insert(); err != nil {
-		this.ReturnErrorMsg("Insert into db err ", err.Error(), "")
-		return
+
+	subscription := &models.Subscription{
+		Email:     email,
+		TimeStamp: uint64(now.Unix()),
 	}
 
+	subscription.TimeStamp = uint64(now.Unix())
+	if insertErr := subscription.Insert(); insertErr != nil {
+		info, err := subscription.Get(email)
+		if err == nil {
+			// Duplicate entry, return success
+			if info != nil {
+				this.ReturnData(info, nil)
+				return
+			} else {
+				this.ReturnErrorMsg("Insert into db err: ", insertErr.Error(), "")
+				return
+			}
+		} else {
+			msg := fmt.Sprintf("Insert into db err: %s, and get from db err: %s", insertErr, err)
+			this.ReturnErrorMsg(msg, "", "")
+			return
+		}
+	}
 	this.ReturnData(subscription, nil)
 }
