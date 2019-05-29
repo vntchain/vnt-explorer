@@ -16,7 +16,7 @@ func (this *SubscribeController) Subscribe() {
 	}
 	info, err := subscription.Get(email)
 	if err == nil && info != nil {
-		this.ReturnErrorMsg("Email subscribed already", "", "")
+		this.ReturnData(info, nil)
 		return
 	}
 
