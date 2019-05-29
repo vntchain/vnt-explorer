@@ -27,6 +27,7 @@ type Org struct {
 	Branding       Branding
 }
 type Location struct {
+	Name      string
 	Latitude  float64
 	Longitude float64
 }
@@ -103,13 +104,13 @@ func GetNodes() []*models.Node {
 				Vname:           name,
 				Home:            website,
 				Ip:              ip,
+				NodeUrl:         url,
 				Status:          status,
 				Votes:           votes.String(),
 				VotesFloat:      float64(votes.Uint64()),
 				TotalBounty:     totalBounty.String(),
 				ExtractedBounty: extractedBounty.String(),
 				LastExtractTime: lastExtractTime.String(),
-				IsAlive:         1,
 			}
 			result = append(result, &nodeValue)
 		}
