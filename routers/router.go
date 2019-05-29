@@ -38,4 +38,6 @@ func init() {
 
 	beego.Router("/v1/kline",&controllers.MarketController{},"get:History")
 	beego.Router("/v1/market",&controllers.MarketController{},"get:Market")
+
+	beego.Router("/v1/subscribe",&controllers.SubscribeController{},"get:Subscribe")
 }

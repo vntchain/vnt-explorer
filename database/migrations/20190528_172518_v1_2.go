@@ -38,6 +38,15 @@ func (m *V12_20190528_172518) Up() {
 		"PRIMARY KEY (`id`)," +
 		"KEY `market_info_last_updated` (`last_updated`)" +
 		") ENGINE=InnoDB DEFAULT CHARSET=utf8")
+
+	m.SQL("ALTER TABLE `node` " +
+		"ADD COLUMN `city` varchar(255) NOT NULL DEFAULT '', " +
+		"ADD COLUMN `node_url` varchar(255) NOT NULL DEFAULT '';")
+
+	m.SQL("CREATE TABLE IF NOT EXISTS `subscription` (" +
+		"`email` varchar(255) NOT NULL PRIMARY KEY," +
+		"`time_stamp` bigint(20) unsigned NOT NULL DEFAULT 0" +
+		") ENGINE=InnoDB DEFAULT CHARSET=utf8")
 }
 
 // Reverse the migrations
@@ -47,4 +56,9 @@ func (m *V12_20190528_172518) Down() {
 		"DROP COLUMN `reward`, " +
 		"DROP COLUMN `fee`;")
 	m.SQL("DROP TABLE if exists `market_info`")
+	m.SQL("ALTER TABLE `node` " +
+		"DROP COLUMN `city`, " +
+		"DROP COLUMN `node_url`;")
+	m.SQL("DROP TABLE if exists `subscription`")
+
 }
