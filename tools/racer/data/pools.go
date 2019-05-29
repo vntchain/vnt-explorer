@@ -220,14 +220,17 @@ func (this *NodesTask) DoWork(workRoutine int) {
 		// try to get nodeInfo otherwise copy the old data
 		if dbNode == nil {
 			PostNodeInfoTask(NewNodeInfoTask(node))
-		} else if dbNode.Home != node.Home {
-			PostNodeInfoTask(NewNodeInfoTask(node))
-		} else if (dbNode.Latitude == 0.0 && dbNode.Longitude == 0.0) || dbNode.Logo == "" {
+		} else if dbNode.Home != node.Home ||
+			(dbNode.Latitude == 0.0 && dbNode.Longitude == 0.0) ||
+			dbNode.Logo == "" {
+			node.IsAlive = dbNode.IsAlive
 			PostNodeInfoTask(NewNodeInfoTask(node))
 		} else {
 			node.Longitude = dbNode.Longitude
 			node.Latitude = dbNode.Latitude
+			node.City = dbNode.City
 			node.Logo = dbNode.Logo
+			node.IsAlive = dbNode.IsAlive
 		}
 
 		// if logo file doesn't exist, try to download it
@@ -269,6 +272,7 @@ func (this *NodeInfoTask) DoWork(workRoutine int) {
 	if nodeInfo != nil {
 		this.Node.Latitude = nodeInfo.Org.Location.Latitude
 		this.Node.Longitude = nodeInfo.Org.Location.Longitude
+		this.Node.City = nodeInfo.Org.Location.Name
 		logoUrlList := []string{
 			nodeInfo.Org.Branding.Logo_256,
 			nodeInfo.Org.Branding.Logo_1024,
