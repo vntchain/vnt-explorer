@@ -236,10 +236,9 @@ func updateDB() {
 	for {
 		select {
 		case res := <-resPool:
-			if res.active != (nodeMap[res.nodeUrl].IsAlive == 1) {
-				nodeMap[res.nodeUrl].IsAlive = 1 - nodeMap[res.nodeUrl].IsAlive
+			if node, exists := nodeMap[res.nodeUrl]; exists && node != nil && res.active != (node.IsAlive == 1) {
+				node.IsAlive = 1 - node.IsAlive
 				nodeMap[res.nodeUrl].Insert()
-				delete(nodeMap, res.nodeUrl)
 			}
 		}
 	}
