@@ -680,7 +680,7 @@ func InsertGenius() {
 		beego.Error(msg)
 		panic(err)
 	}
-	geniusAlloc = currDir + "/" + geniusAlloc
+	geniusAlloc = currDir + "/alloc.csv"
 	f, err := os.Open(geniusAlloc)
 	if err != nil {
 		msg := fmt.Sprintf("Failed to read genius allocation snapshot file %s, err: %s", geniusAlloc, err.Error())

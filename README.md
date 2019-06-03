@@ -102,3 +102,13 @@ $ ./bin/dbsync
 ```
 $ nohup ./bin/racer > racer.log 2>&1 &
 ```
+
+# 工具
+### 1. 创世块同步工具 geniuser
+> 该工具用于将创世块的allocation数据同步为交易和账户数据
+> 该工具一般建议在浏览器数据同步前执行一次，也可以在后面随时执行
+
+运行命令：
+```bash
+$ ./bin/geniuser
+```
