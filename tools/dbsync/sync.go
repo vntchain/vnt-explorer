@@ -20,7 +20,7 @@ func main() {
 	red := color.FgRed.Render
 	green := color.FgGreen.Render
 
-	fmt.Println(green("本操作将会对以下数据库进行数据库重建操作："))
+	fmt.Println(green("本操作将会对以下数据库进行重建："))
 	fmt.Println(green("服务器："), dbhost)
 	fmt.Println(green("端口："), dbport)
 	fmt.Println(green("用户名："), dbuser)
@@ -34,7 +34,7 @@ func main() {
 		"不要冲动啊！", "你确定知道你在做什么吗？",
 		"没有后悔药哦！", "好吧，看起来你很坚定！",
 		"嗯，看好你哦！", "好吧，我们开始一个全新的世界吧！",
-		"要不要再想一下？", "好的，let's go!",
+		"要不要再考虑一下？数据真的会清空哦。", "好的，let's go!",
 	}
 
 	var command string
@@ -79,7 +79,6 @@ func alterTable() {
 			}
 		}
 	}
-
 }
 
 func alterColumn(tableName, column, dataType string) error {

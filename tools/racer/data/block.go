@@ -14,6 +14,8 @@ import (
 	"sync"
 	"strconv"
 	"github.com/astaxie/beego/orm"
+	"os"
+	"encoding/csv"
 )
 const BatchSize = 30
 
@@ -664,4 +666,88 @@ func updateAcc(acct *models.Account) {
 	//}
 	//acctCache.Set(acct.Address, acct)
 	PostAccountTask(NewAccountTask(acct, ACTION_UPDATE))
+}
+
+func InsertGenius() {
+	genius, _, _ := GetBlock(0)
+	var accounts = make([]*models.Account, 0)
+	var txs = make([]*models.Transaction, 0)
+
+	geniusAlloc := beego.AppConfig.String("node::genius_alloc")
+	currDir, err := os.Getwd()
+	if err != nil {
+		msg := fmt.Sprintf("Failed to get current directory, err: %s", err.Error())
+		beego.Error(msg)
+		panic(err)
+	}
+	geniusAlloc = currDir + "/alloc.csv"
+	f, err := os.Open(geniusAlloc)
+	if err != nil {
+		msg := fmt.Sprintf("Failed to read genius allocation snapshot file %s, err: %s", geniusAlloc, err.Error())
+		beego.Error(msg)
+		panic(err)
+	}
+
+	defer f.Close()
+
+	csvReader := csv.NewReader(f)
+	rows, err := csvReader.ReadAll()
+	if err != nil {
+		panic(err)
+	}
+	for i, row := range rows {
+		fmt.Printf("Row %d, content: %s\n", i, row)
+		tx, account := genTxAndAccount(row, genius)
+		accounts = append(accounts, account)
+		txs = append(txs, tx)
+	}
+
+	fmt.Println("Transactions: ", txs)
+	fmt.Println("Accounts: ", accounts)
+
+	for _, tx := range txs {
+		tx.Insert()
+	}
+
+	for _, account := range accounts {
+		account.Balance = GetBalance(account.Address)
+		account.Percent = utils.GetBalancePercent(account.Balance, common.VNT_TOTAL, common.VNT_DECIMAL)
+		account.Insert()
+	}
+}
+
+func genTxAndAccount(snapshot []string, genius *models.Block) (*models.Transaction, *models.Account) {
+	if len(snapshot) < 2 {
+		msg := fmt.Sprintf("Invalide snapshot: %v", snapshot)
+		beego.Error(msg)
+		panic(msg)
+	}
+
+	address := snapshot[0]
+	balance := snapshot[1]
+
+	var account = &models.Account{Address: address}
+
+	var tx = &models.Transaction{
+		Hash: "Genius_" + address,
+		TimeStamp: genius.TimeStamp,
+		From: "Genius",
+		To: account,
+		Value: balance,
+		GasLimit: 0,
+		GasPrice: "0",
+		GasUsed: 0,
+		Nonce: 0,
+		Index: 0,
+		Input: "",
+		Status: 1,
+		ContractAddr: "",
+		IsToken: false,
+		TokenFrom: "",
+		TokenTo: "",
+		TokenAmount: "",
+		BlockNumber: 0,
+	}
+
+	return tx, account
 }
