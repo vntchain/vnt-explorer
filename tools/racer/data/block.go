@@ -706,13 +706,37 @@ func InsertGenius() {
 	fmt.Println("Accounts: ", accounts)
 
 	for _, tx := range txs {
-		tx.Insert()
+		fmt.Println("Inserting tx: ", tx.Hash)
+		if err := tx.Insert(); err != nil {
+			fmt.Println("Failed to insert tx: ", tx.Hash, " ,err", err)
+			panic(err)
+		}
 	}
 
 	for _, account := range accounts {
+		fmt.Println("Updating account: ", account.Address)
 		account.Balance = GetBalance(account.Address)
 		account.Percent = utils.GetBalancePercent(account.Balance, common.VNT_TOTAL, common.VNT_DECIMAL)
-		account.Insert()
+		if err := account.Insert(); err != nil {
+			fmt.Println("Failed to update account: ", account.Address, " ,err", err)
+			panic(err)
+		}
+	}
+
+	block := &models.Block{}
+	if block, err := block.GetByNumber(0); err != nil {
+		fmt.Println("Failed to get block 0")
+		if err == orm.ErrNoRows {
+			block = genius
+		}
+
+		block.TxCount = len(txs)
+
+		err = block.Insert()
+		if err != nil {
+			fmt.Println("Failed to update genius block, err", err)
+			panic(err)
+		}
 	}
 }
 
