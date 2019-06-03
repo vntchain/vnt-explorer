@@ -714,15 +714,46 @@ func InsertGenius() {
 	}
 
 	for _, account := range accounts {
-		fmt.Println("Updating account: ", account.Address)
 		account.Balance = GetBalance(account.Address)
 		account.Percent = utils.GetBalancePercent(account.Balance, common.VNT_TOTAL, common.VNT_DECIMAL)
-		if err := account.Insert(); err != nil {
-			fmt.Println("Failed to update account: ", account.Address, " ,err", err)
-			panic(err)
+
+		a := &models.Account{}
+		a, err := a.Get(account.Address)
+		if err != nil {
+			if err == orm.ErrNoRows {
+				fmt.Println("Inserting account: ", account.Address)
+				account = &models.Account{
+					Address:        account.Address,
+					Vname:          account.Address, //todo: get vname
+					Balance:        account.Balance,
+					TxCount:        1,
+					FirstBlock:     0,
+					LastBlock:      0,
+					TokenAmount:    "0",
+					TokenAcctCount: "0",
+					InitTx:         "Genius_"+account.Address,
+					LastTx:         "Genius_"+account.Address,
+				}
+				if err = account.Insert(); err != nil {
+					fmt.Println("Failed to insert account: ", account.Address, " ,err", err)
+					panic(err)
+				}
+			} else {
+				fmt.Println("Failed to get account: ", account.Address, " ,err", err)
+				panic(err)
+			}
+		} else {
+			fmt.Println("Updating account: ", account.Address)
+			a.Balance = account.Balance
+			a.TxCount += 1
+			if err := a.Update(); err != nil {
+				fmt.Println("Failed to update account: ", account.Address, " ,err", err)
+				panic(err)
+			}
 		}
 	}
 
+	fmt.Println("Updating genius block...")
 	block := &models.Block{}
 	if block, err := block.GetByNumber(0); err != nil {
 		fmt.Println("Failed to get block 0")
@@ -738,6 +769,8 @@ func InsertGenius() {
 			panic(err)
 		}
 	}
+
+	fmt.Println("Done!")
 }
 
 func genTxAndAccount(snapshot []string, genius *models.Block) (*models.Transaction, *models.Account) {
@@ -750,7 +783,9 @@ func genTxAndAccount(snapshot []string, genius *models.Block) (*models.Transacti
 	address := snapshot[0]
 	balance := snapshot[1]
 
-	var account = &models.Account{Address: address}
+	var account = &models.Account{
+		Address: address,
+	}
 
 	var tx = &models.Transaction{
 		Hash: "Genius_" + address,
