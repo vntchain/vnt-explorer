@@ -755,19 +755,21 @@ func InsertGenius() {
 
 	fmt.Println("Updating genius block...")
 	block := &models.Block{}
-	if block, err := block.GetByNumber(0); err != nil {
-		fmt.Println("Failed to get block 0")
+	if block, err = block.GetByNumber(0); err != nil {
 		if err == orm.ErrNoRows {
 			block = genius
-		}
-
-		block.TxCount = len(txs)
-
-		err = block.Insert()
-		if err != nil {
-			fmt.Println("Failed to update genius block, err", err)
+		} else {
+			fmt.Println("Failed to get block 0, err:", err)
 			panic(err)
 		}
+	}
+
+	block.TxCount = len(txs)
+
+	err = block.Insert()
+	if err != nil {
+		fmt.Println("Failed to update genius block, err", err)
+		panic(err)
 	}
 
 	fmt.Println("Done!")
