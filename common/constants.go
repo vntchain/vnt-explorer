@@ -6,7 +6,8 @@ const (
 	DefaultOrder           = "desc"
 	DefaultHydrantCount    = 100
 	DefaultHydrantInterval = 3600
-	DefaultMarketInterval = 300
+	DefaultMarketInterval  = 300
+	DefaultNodeInterval    = 300
 	DefaultHydrantChainId  = 1333
 	DefaultGasLimit        = 90000
 	DefaultGasPrice        = 500000000000

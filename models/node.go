@@ -76,3 +76,15 @@ func (n *Node) Count(isSuper int) (int64, error) {
 	qs = qs.SetCond(cond)
 	return qs.Count()
 }
+
+func (n *Node) All() ([]*Node, error) {
+	o := orm.NewOrm()
+	qs := o.QueryTable(n)
+	cond := orm.NewCondition()
+	cond = cond.And("status", 1)
+	qs = qs.SetCond(cond)
+
+	var nodes []*Node
+	_, err := qs.All(&nodes)
+	return nodes, err
+}
