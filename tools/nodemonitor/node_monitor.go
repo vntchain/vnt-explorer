@@ -18,6 +18,7 @@ import (
 	"github.com/vntchain/vnt-explorer/models"
 	"io"
 	"math/big"
+	"sync"
 )
 
 const (
@@ -41,17 +42,23 @@ const (
 	ErrLowTD
 )
 
+type retryInfo struct {
+	nodeUrl    string
+	retryTimes int
+}
+
 type activeStatus struct {
 	nodeUrl string
 	active  bool
 }
 
 var (
-	genesisHash string
-	nodePool    chan string
-	resPool     chan activeStatus
-	td          uint64
-	nodeMap     map[string]*models.Node
+	genesisHash  string
+	nodePool     chan retryInfo
+	resPool      chan activeStatus
+	td           uint64
+	nodeMap      map[string]*models.Node
+	nodeMapMutex sync.Mutex
 )
 var interval, intervalErr = beego.AppConfig.Int("supernode::interval")
 var sourcePort = beego.AppConfig.String("supernode::p2p_port")
@@ -169,7 +176,8 @@ func readStatus(msg Msg, genesis string, localTD *big.Int) (err error) {
 	return nil
 }
 
-func pingNode(host host.Host, nodeUrl string) { // Turn the destination into a multiaddr.
+func pingNode(host host.Host, nodeUrl string, tryTimes int) {
+	// Turn the destination into a multiaddr.
 	maddr, err := multiaddr.NewMultiaddr(nodeUrl)
 	if err != nil {
 		beego.Error("ping Node, get maddr error ", err, " nodeUrl ", nodeUrl)
@@ -188,27 +196,36 @@ func pingNode(host host.Host, nodeUrl string) { // Turn the destination into a m
 	// Add the destination's peer multiaddress in the peerstore.
 	// This will be used during connection and stream creation by libp2p.
 	host.Peerstore().AddAddrs(info.ID, info.Addrs, peerstore.PermanentAddrTTL)
-
+	defer host.Peerstore().ClearAddrs(info.ID)
 	// Start a stream with the destination.
 	// Multiaddress of the destination peer is fetched from the peerstore using 'peerId'.
 	s, err := host.NewStream(context.Background(), info.ID, "/p2p/1.0.0")
 	if err != nil {
-		beego.Error("NewStream error: ", err, " nodeUrl ", nodeUrl)
-		resPool <- activeStatus{nodeUrl, false}
-		return
+		beego.Error("try", tryTimes, "times, newStream error:", err, " nodeUrl ", nodeUrl)
+
 	} else if err := readData(s, genesisHash, big.NewInt(0).SetUint64(td)); err != nil {
-		beego.Error("read data error ", err, " nodeUrl ", nodeUrl)
-		resPool <- activeStatus{nodeUrl, false}
+		beego.Error("try", tryTimes, "times, read data error", err, " nodeUrl ", nodeUrl)
+	} else {
+		beego.Info("try", tryTimes, "times, ping node success", nodeUrl)
+		resPool <- activeStatus{nodeUrl, true}
 		return
 	}
-	resPool <- activeStatus{nodeUrl, true}
+	go func(tryTimes int) {
+		if tryTimes == 10 {
+			resPool <- activeStatus{nodeUrl, false}
+		} else {
+			time.Sleep(time.Duration(tryTimes) * 2 * time.Second)
+			nodePool <- retryInfo{nodeUrl, tryTimes + 1}
+		}
+	}(tryTimes)
+	return
 }
 
 func pingManager(host host.Host) {
 	for {
 		select {
-		case url := <-nodePool:
-			go pingNode(host, url)
+		case retryInfo := <-nodePool:
+			pingNode(host, retryInfo.nodeUrl, retryInfo.retryTimes)
 		}
 	}
 }
@@ -227,8 +244,12 @@ func getAllNodes() {
 	}
 
 	for _, node := range nodes {
-		nodeMap[node.NodeUrl] = node
-		nodePool <- node.NodeUrl
+		nodeMapMutex.Lock()
+		if _, exists := nodeMap[node.NodeUrl]; !exists {
+			nodeMap[node.NodeUrl] = node
+			nodePool <- retryInfo{node.NodeUrl, 1}
+		}
+		nodeMapMutex.Unlock()
 	}
 }
 
@@ -236,9 +257,14 @@ func updateDB() {
 	for {
 		select {
 		case res := <-resPool:
-			if node, exists := nodeMap[res.nodeUrl]; exists && node != nil && res.active != (node.IsAlive == 1) {
-				node.IsAlive = 1 - node.IsAlive
-				nodeMap[res.nodeUrl].Insert()
+			nodeMapMutex.Lock()
+			if node, exists := nodeMap[res.nodeUrl]; exists {
+				if node != nil && res.active != (node.IsAlive == 1) {
+					node.IsAlive = 1 - node.IsAlive
+					nodeMap[res.nodeUrl].Insert()
+				}
+				delete(nodeMap, res.nodeUrl)
+				nodeMapMutex.Unlock()
 			}
 		}
 	}
@@ -267,16 +293,18 @@ func main() {
 		beego.Info("-", la)
 	}
 
-	nodePool = make(chan string, 64)
-	resPool = make(chan activeStatus, 64)
+	nodePool = make(chan retryInfo, 16)
+	resPool = make(chan activeStatus, 16)
 	nodeMap = make(map[string]*models.Node)
 
-	go pingManager(host)
-	go getAllNodes()
+	for i := 0; i < 4; i++ {
+		go pingManager(host)
+	}
 	go updateDB()
+	getAllNodes()
 	t := time.Tick(time.Second * time.Duration(interval))
 	for range t {
-		go getAllNodes()
+		getAllNodes()
 	}
 }
 
