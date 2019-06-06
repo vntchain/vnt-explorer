@@ -446,7 +446,7 @@ func ExtractAcct(tx *models.Transaction) {
 				}
 			}
 		}
-	} else if contractAddr != "" { // this case is for contract creation
+	} else if contractAddr != "" && tx.Status == 1 { // this case is for contract creation
 		if a := GetAccount(contractAddr); a == nil {
 			// new contract account
 			beego.Info("Block:", tx.BlockNumber, ", will insert contract account:", contractAddr)
