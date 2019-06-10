@@ -101,17 +101,17 @@ GET /v1/blocks
 # 初始化数据库表，只需要在初始化时运行一次即可，此命令慎用
 $ ./bin/dbsync
 ```
-# 开启同步数据进程
+## 开启同步数据进程
 ```
 $ nohup ./bin/racer > racer.log 2>&1 &
 ```
 
-# 开启同步交易所数据进程
+## 开启同步交易所数据进程
 ```
 $ nohup ./bin/feixiaohao > feixiaohao.log 2>&1 &
 ```
 
-# 开启节点检测进程
+## 开启节点检测进程
 ```
 $ nohup ./bin/nodemonitor > nodemonitor.log 2>&1 &
 ```
