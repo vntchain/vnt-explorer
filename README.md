@@ -72,8 +72,11 @@ $ cd -
 ```bash
 $ ./build.sh
 ```
-编译完成后，目录下会多出一个`bin/`目录，分别包含了三个可执行文件：
+编译完成后，目录下会多出一个`bin/`目录，分别包含了六个可执行文件：
 * dbsync 数据库初始化命令，用于初始化表格
+* feixiaohao 获取交易所数据，用于同步当前vnt价格，市值，交易量等数据
+* geniuser 创世块同步工具
+* nodemonitor 超级节点检测程序，用于检查超级节点及候选节点是否在线
 * racer 数据同步命令，用于将区块链中的数据同步到mysql数据库中
 * vnt-explorer 浏览器后端服务，用于开启后端服务
 
@@ -101,6 +104,16 @@ $ ./bin/dbsync
 # 开启同步数据进程
 ```
 $ nohup ./bin/racer > racer.log 2>&1 &
+```
+
+# 开启同步交易所数据进程
+```
+$ nohup ./bin/feixiaohao > feixiaohao.log 2>&1 &
+```
+
+# 开启节点检测进程
+```
+$ nohup ./bin/nodemonitor > nodemonitor.log 2>&1 &
 ```
 
 # 工具
