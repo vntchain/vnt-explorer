@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/astaxie/beego"
-	"github.com/vntchain/vnt-explorer/common"
 	"github.com/vntchain/vnt-explorer/common/utils"
 	"github.com/vntchain/vnt-explorer/models"
 	"strconv"
@@ -12,8 +11,6 @@ import (
 )
 
 const MYTOKENAPI = "https://api.mytokenapi.com/currency/currencydetail"
-
-var interval, intervalErr = beego.AppConfig.Int("market::interval")
 
 var params = []utils.Param{
 	{"timestamp", "1557902202527"},
@@ -91,11 +88,8 @@ func GetCoinAndInsertDB() {
 }
 
 func main() {
-	if intervalErr != nil {
-		interval = common.DefaultMarketInterval
-	}
 	go GetCoinAndInsertDB()
-	t := time.Tick(time.Second * time.Duration(interval))
+	t := time.Tick(time.Minute)
 	for range t {
 		go GetCoinAndInsertDB()
 	}

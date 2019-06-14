@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/astaxie/beego"
-	"github.com/vntchain/vnt-explorer/common"
 	"github.com/vntchain/vnt-explorer/common/utils"
 	"github.com/vntchain/vnt-explorer/models"
 	"strconv"
@@ -15,8 +14,6 @@ const (
 	COINCODE      = "vntchain"
 	FEIXIAOHAOURL = "http://dncapi.bqiapp.com/api/coin/"
 )
-
-var interval, intervalErr = beego.AppConfig.Int("market::interval")
 
 type CoinInfoResp struct {
 	Data   *coinInfo `json:"data"`
@@ -140,11 +137,8 @@ func GetCoinAndInsertDB() {
 }
 
 func main() {
-	if intervalErr != nil {
-		interval = common.DefaultMarketInterval
-	}
 	go GetCoinAndInsertDB()
-	t := time.Tick(time.Second * time.Duration(interval))
+	t := time.Tick(time.Minute)
 	for range t {
 		go GetCoinAndInsertDB()
 	}

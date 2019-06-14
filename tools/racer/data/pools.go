@@ -221,8 +221,9 @@ func (this *NodesTask) DoWork(workRoutine int) {
 		if dbNode == nil {
 			PostNodeInfoTask(NewNodeInfoTask(node))
 		} else if dbNode.Home != node.Home ||
-			(dbNode.Latitude == 0.0 && dbNode.Longitude == 0.0) ||
-			dbNode.Logo == "" {
+			(dbNode.Latitude == 360 && dbNode.Longitude == 360) ||
+			dbNode.Logo == "" ||
+			(dbNode.Status == 0 && node.Status == 1) {
 			node.IsAlive = dbNode.IsAlive
 			PostNodeInfoTask(NewNodeInfoTask(node))
 		} else {
