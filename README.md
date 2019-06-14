@@ -51,6 +51,12 @@ interval = 3600
 # 测试网的chianid
 chainId = 2
 
+# 监测超级节点是否在线的配置
+[supernode]
+# 监测间隔，隔多少秒去检查下节点们是否在线
+interval = 300
+# 监测程序使用的端口
+p2p_port = 5050
 ```
 
 ## 安装依赖

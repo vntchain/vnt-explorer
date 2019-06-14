@@ -111,6 +111,8 @@ func GetNodes() []*models.Node {
 				TotalBounty:     totalBounty.String(),
 				ExtractedBounty: extractedBounty.String(),
 				LastExtractTime: lastExtractTime.String(),
+				Latitude:        360,
+				Longitude:       360,
 			}
 			result = append(result, &nodeValue)
 		}
@@ -139,7 +141,11 @@ func GetBpInfo(website string) (bp *BpInfo) {
 		beego.Error("Failed to unmarshal bpInfo: %s", err.Error())
 		return nil
 	}
-
+	if bp.Org.Location.Longitude < -180 || bp.Org.Location.Longitude > 180 ||
+		bp.Org.Location.Latitude < -90 || bp.Org.Location.Latitude > 90 {
+		bp.Org.Location.Longitude = 360
+		bp.Org.Location.Latitude = 360
+	}
 	return
 }
 
