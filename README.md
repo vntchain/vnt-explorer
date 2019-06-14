@@ -61,6 +61,7 @@ $ go get github.com/beego/bee
 $ go get github.com/go-sql-driver/mysql
 $ go get github.com/bluele/gcache
 $ go get github.com/vntchain/go-vnt
+$ go get github.com/gookit/color
 
 # 切换一下beego依赖的分支
 $ cd $GOPATH/src/github.com/astaxie/beego

@@ -466,7 +466,7 @@ func ExtractAcct(tx *models.Transaction) {
 
 func GetBalance(addr string) string {
 	rpc := common.NewRpc()
-	rpc.Method = common.Rpc_GetBlance
+	rpc.Method = common.Rpc_GetBalance
 
 	rpc.Params = append(rpc.Params, addr)
 	rpc.Params = append(rpc.Params, "latest")
@@ -764,6 +764,8 @@ func InsertGenius() {
 		}
 	}
 
+	block.Reward = 6
+	block.Fee = 0
 	block.TxCount = len(txs)
 
 	err = block.Insert()
