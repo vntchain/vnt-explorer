@@ -56,7 +56,7 @@ func GetNodes() []*models.Node {
 		nodeList := resp.Result.([]interface{})
 		totalVotes := big.NewInt(0)
 
-		beego.Info("Response body", resp)
+		beego.Debug("Response body", resp)
 
 		for _, n := range nodeList {
 			node := n.(map[string]interface{})

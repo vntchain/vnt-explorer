@@ -49,7 +49,7 @@ type BlockInsertTask struct {
 
 func (this *BlockInsertTask) DoWork(workRoutine int) {
 	this.PreDoWork(workRoutine)
-	beego.Info("Will insert block:", this.Block.Number)
+	beego.Debug("Will insert block:", this.Block.Number)
 	err := this.Block.Insert()
 	if err != nil {
 		msg := fmt.Sprintf("Failed to insert or update block: %v, error: %s,", this.Block, err.Error())

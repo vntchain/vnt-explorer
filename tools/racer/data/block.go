@@ -84,7 +84,7 @@ func GetLocalHeight() (int64, *models.Block) {
 		msg := fmt.Sprintf("Block data in db not matched! count %d not match lastest block number %d.", count, bNumber)
 		beego.Warn(msg)
 		c, b := SearchValidHeight(count, bNumber)
-		beego.Info(">>> Using", c, "as local height.")
+		beego.Debug(">>> Using", c, "as local height.")
 		return c, b
 	}
 
@@ -92,7 +92,7 @@ func GetLocalHeight() (int64, *models.Block) {
 }
 
 func SearchValidHeight(currCount int64, topNumber int64) (int64, *models.Block) {
-	beego.Info("Search for a valid block...")
+	beego.Debug("Search for a valid block...")
 	left := uint64(topNumber - BatchSize)
 	right := uint64(currCount-1)
 	block := &models.Block{}
@@ -112,7 +112,7 @@ func SearchValidHeight(currCount int64, topNumber int64) (int64, *models.Block) 
 
 		c, err := block.CountBellow(mid)
 
-		beego.Info(">>>> Left:", left, "Right:", right, "Mid:", mid, "Count: ", c)
+		beego.Debug(">>>> Left:", left, "Right:", right, "Mid:", mid, "Count: ", c)
 		if err != nil {
 			msg := fmt.Sprintf("Failed to get count bellow number: %d", mid)
 			beego.Error(msg)
@@ -120,17 +120,17 @@ func SearchValidHeight(currCount int64, topNumber int64) (int64, *models.Block) 
 		}
 
 		if int64(b.Number) + 1 == c {
-			beego.Info(">>>> A good block:", b.Number)
+			beego.Debug(">>>> A good block:", b.Number)
 			if right - b.Number <= 1 {
 
-				beego.Info(">>>> A bingo block:", b.Number)
+				beego.Debug(">>>> A bingo block:", b.Number)
 				return int64(b.Number), b
 			} else {
-				beego.Info(">>>> Use as left: block:", b.Number)
+				beego.Debug(">>>> Use as left: block:", b.Number)
 				left = b.Number
 			}
 		} else {
-			beego.Info(">>>> A bad block:", b.Number, ", using as right")
+			beego.Debug(">>>> A bad block:", b.Number, ", using as right")
 			right = b.Number - 1
 		}
 	}
@@ -146,7 +146,7 @@ func GetRemoteHeight() int64 {
 		panic(err.Error())
 	}
 
-	beego.Info("Response body", resp)
+	beego.Debug("Response body", resp)
 
 	blockNumber := utils.Hex(resp.Result.(string)).ToInt64()
 
@@ -186,7 +186,7 @@ func GetBlock(number int64) (*models.Block, []map[string]interface{}, []interfac
 
 	blockMap := GetBlockMap(number)
 
-	beego.Info("BlockMap: ", blockMap)
+	beego.Debug("BlockMap: ", blockMap)
 
 	bNumber := utils.Hex(blockMap["number"].(string)).ToUint64()
 
@@ -214,7 +214,7 @@ func GetBlock(number int64) (*models.Block, []map[string]interface{}, []interfac
 	var txs []map[string]interface{}
 	var ok bool
 	txIs := blockMap["transactions"].([]interface{})
-	beego.Info("txs: ", txIs)
+	beego.Debug("txs: ", txIs)
 
 	if len(txIs) > 0 {
 		for _, tx := range txIs {
@@ -225,7 +225,7 @@ func GetBlock(number int64) (*models.Block, []map[string]interface{}, []interfac
 	//txs = blockMap["transactions"].([]map[string]interface{})
 
 	//if txs, ok = blockMap["transactions"].([]map[string]interface{}); !ok {
-	//	beego.Info("Failed to to get txs", txs)
+	//	beego.Debug("Failed to to get txs", txs)
 	//
 	//	txs = make([]map[string]interface{}, 0)
 	//}
@@ -254,7 +254,7 @@ func GetWitnesses(number int64) ([]interface{}) {
 func GetLastBlock(number int64) (*models.Block) {
 	blockMap := GetBlockMap(number)
 
-	beego.Info("BlockMap: ", blockMap)
+	beego.Debug("BlockMap: ", blockMap)
 
 	bNumber := utils.Hex(blockMap["number"].(string)).ToUint64()
 
@@ -282,16 +282,16 @@ func GetLastBlock(number int64) (*models.Block) {
 }
 
 func PersistBlock(number int64) {
-	beego.Info("Will get block: ", number)
+	beego.Debug("Will get block: ", number)
 	block, txs, witnesses := GetBlock(number)
 	var lastBlock *models.Block = nil
 	if number > 0 {
 		lastBlock = GetLastBlock(number-1)
 	}
 
-	beego.Info("Block:", block)
-	beego.Info("txs:", txs)
-	beego.Info("witness:", witnesses)
+	beego.Debug("Block:", block)
+	beego.Debug("txs:", txs)
+	beego.Debug("witness:", witnesses)
 
 	leftAddrs := make([]string, 0)
 	for _, w := range witnesses {
@@ -303,11 +303,11 @@ func PersistBlock(number int64) {
 	for _, tx := range txs {
 		tx := GetTx(tx)
 		tx.TimeStamp = block.TimeStamp
-		beego.Info("Got transaction: ", tx)
+		beego.Debug("Got transaction: ", tx)
 
 		//PostTxTask(NewTxTask(tx))
 
-		beego.Info("Will extract accounts from transaction: ", tx.Hash)
+		beego.Debug("Will extract accounts from transaction: ", tx.Hash)
 		PostExtractAccountTask(NewExtractAccountTask(tx))
 		//data.ExtractAcct(tx)
 
@@ -317,7 +317,6 @@ func PersistBlock(number int64) {
 			panic(msg)
 		}
 		dynamicReward += float64(tx.GasUsed) * (float64(tmp) / 1e18)
-		// beego.Info("---------> tx.GasUsed == ", tx.GasUsed, "tx.GasPrice ==", tx.GasPrice)
 	}
 
 	block.TxCount = len(txs)
@@ -346,7 +345,6 @@ func PersistBlock(number int64) {
 	block.BlockReward = fmt.Sprintf("%f VNT (%f + %f)", result, staticReward, dynamicReward)
 	block.Reward = staticReward
 	block.Fee = dynamicReward
-	// beego.Info("---------> block.BlockReward == ", block.BlockReward)
 
 	PostInsertBlockTask(NewBlockInsertTask(block))
 }
@@ -354,17 +352,6 @@ func PersistBlock(number int64) {
 
 func GetTx(txMap map[string]interface{}) *models.Transaction {
 	rpc := common.NewRpc()
-	//rpc.Method = common.Rpc_GetTxByHash
-	//
-	//rpc.Params = append(rpc.Params, txHash)
-	//
-	//err, resp, _ := utils.CallRpc(rpc)
-	//if err != nil {
-	//	panic(err.Error())
-	//}
-	//
-	//txMap := resp.Result.(map[string]interface{})
-	//beego.Info("Transaction: ", txMap)
 
 	txHash := txMap["hash"].(string)
 
@@ -377,7 +364,7 @@ func GetTx(txMap map[string]interface{}) *models.Transaction {
 	}
 
 	receiptMap := resp.Result.(map[string]interface{})
-	beego.Info("Transaction: ", receiptMap)
+	beego.Debug("Transaction: ", receiptMap)
 
 	tx := &models.Transaction{
 		Hash:        txHash,
@@ -398,7 +385,7 @@ func GetTx(txMap map[string]interface{}) *models.Transaction {
 	if to, ok = txMap["to"].(string); !ok {
 		to = ""
 
-		beego.Info("This is a transaction of contract creation.")
+		beego.Debug("This is a transaction of contract creation.")
 		if contractAddr, ok := receiptMap["contractAddress"].(string); ok {
 			tx.ContractAddr = strings.ToLower(contractAddr)
 		}
@@ -419,29 +406,29 @@ func ExtractAcct(tx *models.Transaction) {
 	if _, ok := AccountMap.Load(from); !ok {
 		AccountMap.Store(from, 0)
 		if a := GetAccount(from); a == nil {
-			beego.Info("Block:", tx.BlockNumber, ", will insert normal account:", from)
+			beego.Debug("Block:", tx.BlockNumber, ", will insert normal account:", from)
 			NewAccount(from, tx, ACC_TYPE_NORMAL, 1)
 		} else {
-			beego.Info("Block:", tx.BlockNumber, ", will update normal account:", from)
+			beego.Debug("Block:", tx.BlockNumber, ", will update normal account:", from)
 			UpdateAccount(a, tx, ACC_TYPE_NORMAL, 1)
 		}
 	}
 
 	if to != nil && to.Address != "" {
 		if a := GetAccount(to.Address); a == nil {
-			beego.Info("Block:", tx.BlockNumber, ", will insert normal account:", to)
+			beego.Debug("Block:", tx.BlockNumber, ", will insert normal account:", to)
 			NewAccount(to.Address, tx, ACC_TYPE_NORMAL, 1)
 		} else {
 			if a.IsToken {
-				beego.Info("Block:", tx.BlockNumber, ", will update token account:", to)
+				beego.Debug("Block:", tx.BlockNumber, ", will update token account:", to)
 				UpdateAccount(a, tx, ACC_TYPE_TOKEN, 1)
 			} else if a.IsContract {
-				beego.Info("Block:", tx.BlockNumber, ", will update contract account:", to)
+				beego.Debug("Block:", tx.BlockNumber, ", will update contract account:", to)
 				UpdateAccount(a, tx, ACC_TYPE_CONTRACT, 1)
 			} else {
 				if _, ok := AccountMap.Load(to.Address); !ok {
 					AccountMap.Store(to.Address, 0)
-					beego.Info("Block:", tx.BlockNumber, ", will update normal account:", from)
+					beego.Debug("Block:", tx.BlockNumber, ", will update normal account:", from)
 					UpdateAccount(a, tx, ACC_TYPE_NORMAL, 1)
 				}
 			}
@@ -449,13 +436,13 @@ func ExtractAcct(tx *models.Transaction) {
 	} else if contractAddr != "" && tx.Status == 1 { // this case is for contract creation
 		if a := GetAccount(contractAddr); a == nil {
 			// new contract account
-			beego.Info("Block:", tx.BlockNumber, ", will insert contract account:", contractAddr)
+			beego.Debug("Block:", tx.BlockNumber, ", will insert contract account:", contractAddr)
 			NewAccount(contractAddr, tx, ACC_TYPE_CONTRACT, 0)
 		} else if !a.IsContract {
 			// this account already exists as a normal account,
 			// will change it to a contract account
 			//a.IsContract = true
-			beego.Info("Block:", tx.BlockNumber, ", will update contract account:", contractAddr)
+			beego.Debug("Block:", tx.BlockNumber, ", will update contract account:", contractAddr)
 			UpdateAccount(a, tx, ACC_TYPE_CONTRACT, 0)
 		}
 	}
@@ -532,8 +519,6 @@ func NewAccount(addr string, tx *models.Transaction, _type int, txCount uint64) 
 		a.ContractName = "" // TODO: extract contract name from contract code
 		a.ContractOwner = tx.From
 
-		//beego.Info("######### a.ContractOwner:", a.ContractOwner)
-
 		if ok, erc20 := IsToken(addr, tx); ok {
 			a.IsToken = true
 
@@ -602,13 +587,13 @@ func UpdateAccount(account *models.Account, tx *models.Transaction, _type int, t
 			updateAcc(acct)
 		} else {
 			NewAccount(a, tx, ACC_TYPE_NORMAL, 0)
-			beego.Info("Inserted accounts: ", a)
+			beego.Debug("Inserted accounts: ", a)
 		}
 	}
 }
 
 func PersistWitnesses(accts []string, blockNumber uint64) {
-	beego.Info("Will persist witnesses accounts: ", accts)
+	beego.Debug("Will persist witnesses accounts: ", accts)
 	for _, a := range accts {
 		if _, ok := AccountMap.Load(a); ok {
 			continue
@@ -621,7 +606,7 @@ func PersistWitnesses(accts []string, blockNumber uint64) {
 			updateAcc(acct)
 		} else {
 			NewAccount(a, &models.Transaction{BlockNumber: blockNumber}, ACC_TYPE_NORMAL, 0)
-			beego.Info("Inserted witness account: ", a)
+			beego.Debug("Inserted witness account: ", a)
 		}
 	}
 }
@@ -629,17 +614,17 @@ func PersistWitnesses(accts []string, blockNumber uint64) {
 func GetAccount(addr string) *models.Account {
 	addr = strings.ToLower(addr)
 	if _type, err := acctCache.Get(addr); err == nil && _type != nil {
-		beego.Info("Address hit in cache:", addr)
+		beego.Debug("Address hit in cache:", addr)
 		return _type.(*models.Account)
 	} else {
-		beego.Info("Address not hit in cache:", addr)
+		beego.Debug("Address not hit in cache:", addr)
 		a := &models.Account{}
 		a, err := a.Get(addr)
 		if err != nil {
-			beego.Info("Address not hit in db:", addr)
+			beego.Debug("Address not hit in db:", addr)
 			return nil
 		}
-		beego.Info("Address hit in db:", addr)
+		beego.Debug("Address hit in db:", addr)
 		acctCache.Set(addr, a)
 		return a
 	}
