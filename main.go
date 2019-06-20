@@ -5,9 +5,11 @@ import (
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/plugins/cors"
 	"github.com/astaxie/beego/orm"
+	"github.com/vntchain/vnt-explorer/common"
 )
 
 func main() {
+	common.InitLogLevel()
 	orm.Debug = true
 	beego.InsertFilter("*", beego.BeforeRouter, cors.Allow(&cors.Options{
 		AllowAllOrigins:  true,

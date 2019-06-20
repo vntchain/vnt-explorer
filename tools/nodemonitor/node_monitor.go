@@ -271,6 +271,8 @@ func updateDB() {
 }
 
 func main() {
+
+	common.InitLogLevel()
 	if intervalErr != nil {
 		interval = common.DefaultNodeInterval
 	}

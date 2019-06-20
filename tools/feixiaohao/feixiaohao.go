@@ -8,6 +8,7 @@ import (
 	"github.com/vntchain/vnt-explorer/models"
 	"strconv"
 	"time"
+	"github.com/vntchain/vnt-explorer/common"
 )
 
 const (
@@ -137,6 +138,7 @@ func GetCoinAndInsertDB() {
 }
 
 func main() {
+	common.InitLogLevel()
 	go GetCoinAndInsertDB()
 	t := time.Tick(time.Minute)
 	for range t {

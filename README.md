@@ -57,6 +57,11 @@ chainId = 2
 interval = 300
 # 监测程序使用的端口
 p2p_port = 5050
+
+[log]
+# log level, could be ERROR, WARN, INFO, DEBUG
+level=INFO
+
 ```
 
 ## 安装依赖

@@ -10,11 +10,11 @@ import (
 	"github.com/vntchain/vnt-explorer/tools/racer/token"
 	"runtime/debug"
 	"sync"
+	"github.com/vntchain/vnt-explorer/common"
 )
 
 func main() {
-	//a := data.SearchValidHeight(1186, 1192)
-	//beego.Info(a)
+	common.InitLogLevel()
 	registerElectionContract()
 
 	for {
@@ -38,7 +38,7 @@ func doSync() {
 	//rmtHgt = 25913
 	beego.Info(fmt.Sprintf("Local height: %d, rmtHeight: %d", localHgt, rmtHgt))
 	if localHgt >= rmtHgt {
-		beego.Info("here!")
+		beego.Info("No more blocks.")
 		time.Sleep(2 * time.Second)
 		return
 	}
@@ -50,6 +50,7 @@ func doSync() {
 
 	for localHgt < rmtHgt {
 		localHgt = localHgt + 1
+		beego.Info(fmt.Sprintf("Will sync block %d", localHgt))
 		data.PostBlockTask(data.NewBlockTask(localHgt))
 	}
 

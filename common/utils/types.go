@@ -8,7 +8,7 @@ import (
 type Hex string
 
 func (hex Hex) ToUint64() uint64 {
-	beego.Info("Will convert hex", hex)
+	beego.Debug("Will convert hex", hex)
 	r,e := DecodeUint64(string(hex))
 
 	if e != nil {
