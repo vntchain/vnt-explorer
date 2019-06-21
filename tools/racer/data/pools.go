@@ -271,13 +271,13 @@ func (this *NodeInfoTask) DoWork(workRoutine int) {
 
 	nodeInfo := GetBpInfo(this.Node.Home + "/bp.json")
 	if nodeInfo != nil {
-		this.Node.Latitude = nodeInfo.Org.Location.Latitude
-		this.Node.Longitude = nodeInfo.Org.Location.Longitude
-		this.Node.City = nodeInfo.Org.Location.Name
+		this.Node.Latitude = nodeInfo.Location.Latitude
+		this.Node.Longitude = nodeInfo.Location.Longitude
+		this.Node.City = nodeInfo.Location.Name
 		logoUrlList := []string{
-			nodeInfo.Org.Branding.Logo_256,
-			nodeInfo.Org.Branding.Logo_1024,
-			nodeInfo.Org.Branding.Logo_Svg,
+			nodeInfo.Branding.Logo_256,
+			nodeInfo.Branding.Logo_1024,
+			nodeInfo.Branding.Logo_Svg,
 		}
 		nodeLogoList := []string{"", "", ""}
 		for i, url := range logoUrlList {

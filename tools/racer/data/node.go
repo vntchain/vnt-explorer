@@ -18,10 +18,6 @@ import (
 )
 
 type BpInfo struct {
-	Org Org
-}
-
-type Org struct {
 	Candidate_Name string
 	Location       Location
 	Branding       Branding
@@ -141,10 +137,10 @@ func GetBpInfo(website string) (bp *BpInfo) {
 		beego.Error("Failed to unmarshal bpInfo: %s", err.Error())
 		return nil
 	}
-	if bp.Org.Location.Longitude < -180 || bp.Org.Location.Longitude > 180 ||
-		bp.Org.Location.Latitude < -90 || bp.Org.Location.Latitude > 90 {
-		bp.Org.Location.Longitude = 360
-		bp.Org.Location.Latitude = 360
+	if bp.Location.Longitude < -180 || bp.Location.Longitude > 180 ||
+		bp.Location.Latitude < -90 || bp.Location.Latitude > 90 {
+		bp.Location.Longitude = 360
+		bp.Location.Latitude = 360
 	}
 	return
 }
