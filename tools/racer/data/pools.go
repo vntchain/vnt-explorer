@@ -209,11 +209,10 @@ func (this *NodesTask) DoWork(workRoutine int) {
 		dbNode.Get(node.Address)
 
 		// register account's Vname
-		account := &models.Account{}
-		account, err := account.Get(node.Address)
-		if err == nil {
+		account := GetAccount(node.Address)
+		if account != nil && account.Vname != node.Vname {
 			account.Vname = node.Vname
-			account.Insert()
+			updateAcc(account)
 		}
 
 		// new node or node's home update, or node's location is unknown
