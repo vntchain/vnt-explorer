@@ -9,15 +9,15 @@ type Account struct {
 	Vname          string `orm:"unique"`
 	Balance        string `orm:"index"`
 	TxCount        uint64
-	IsContract     bool   `orm:"index"`
+	IsContract     bool `orm:"index"`
 	ContractName   string
 	ContractOwner  string `orm:"index"`
 	Code           string `orm:"type(text)"`
 	Abi            string `orm:"type(text)"`
 	Home           string
 	InitTx         string
-	LastTx		   string
-	IsToken        bool	  `orm:"index"`
+	LastTx         string
+	IsToken        bool `orm:"index"`
 	TokenType      int
 	TokenSymbol    string
 	TokenLogo      string
@@ -26,7 +26,7 @@ type Account struct {
 	TokenAcctCount string
 	FirstBlock     uint64
 	LastBlock      uint64
-	Percent 	   float32
+	Percent        float32
 }
 
 func (a *Account) Insert() error {
@@ -75,10 +75,10 @@ func (a *Account) Count(isContract, isToken int) (int64, error) {
 
 func (a *Account) makeCond(isContract, isToken int) *orm.Condition {
 	cond := orm.NewCondition()
-	if isToken >= 0 {
-		cond = cond.And("IsToken", isToken == 1)
-	} else if isContract >= 0 {
-		cond = cond.And("IsContract", isContract == 1)
+	if isToken > 0 {
+		cond = cond.And("IsToken", true)
+	} else if isContract > 0 {
+		cond = cond.And("IsContract", true)
 	}
 
 	return cond
