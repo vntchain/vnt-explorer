@@ -58,31 +58,17 @@ func GetNodes() []*models.Node {
 			node := n.(map[string]interface{})
 			address := node["owner"].(string)
 			name := node["name"].(string)
-			active := node["active"].(bool)
+			registered := node["registered"].(bool)
+			bind := node["bind"].(bool)
 			url := node["url"].(string)
 			votes, err := utils.DecodeBig(node["voteCount"].(string))
 			if err != nil {
 				beego.Error("Get node voteCount err: ", err)
 				votes = big.NewInt(0)
 			}
-			totalBounty, err := utils.DecodeBig(node["totalBounty"].(string))
-			if err != nil {
-				beego.Error("Get node totalBounty err: ", err)
-				votes = big.NewInt(0)
-			}
-			extractedBounty, err := utils.DecodeBig(node["extractedBounty"].(string))
-			if err != nil {
-				beego.Error("Get node extractedBounty err: ", err)
-				extractedBounty = big.NewInt(0)
-			}
-			lastExtractTime, err := utils.DecodeBig(node["lastExtractTime"].(string))
-			if err != nil {
-				beego.Error("Get node lastExtractTime err: ", err)
-				lastExtractTime = big.NewInt(0)
-			}
 			website := node["website"].(string)
 			status := 0
-			if active {
+			if registered && bind {
 				status = 1
 			}
 
@@ -96,19 +82,16 @@ func GetNodes() []*models.Node {
 			totalVotes = totalVotes.Add(totalVotes, votes)
 
 			nodeValue := models.Node{
-				Address:         strings.ToLower(address),
-				Vname:           name,
-				Home:            website,
-				Ip:              ip,
-				NodeUrl:         url,
-				Status:          status,
-				Votes:           votes.String(),
-				VotesFloat:      float64(votes.Uint64()),
-				TotalBounty:     totalBounty.String(),
-				ExtractedBounty: extractedBounty.String(),
-				LastExtractTime: lastExtractTime.String(),
-				Latitude:        360,
-				Longitude:       360,
+				Address:    strings.ToLower(address),
+				Vname:      name,
+				Home:       website,
+				Ip:         ip,
+				NodeUrl:    url,
+				Status:     status,
+				Votes:      votes.String(),
+				VotesFloat: float64(votes.Uint64()),
+				Latitude:   360,
+				Longitude:  360,
 			}
 			result = append(result, &nodeValue)
 		}

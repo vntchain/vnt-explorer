@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/orm"
+	"github.com/gookit/color"
 	"github.com/vntchain/vnt-explorer/models"
 	"strings"
-	"github.com/gookit/color"
 )
 
 func main() {
@@ -38,7 +38,7 @@ func main() {
 	}
 
 	var command string
-	for _, console := range(alert) {
+	for _, console := range alert {
 		fmt.Print(red(console), green("Y(继续)/N(放弃):"))
 		fmt.Scan(&command)
 		if strings.ToUpper(command) == "Y" {
@@ -70,7 +70,7 @@ func alterTable() {
 	needAlterMap := make(map[string][]string)
 	needAlterMap["account"] = []string{"balance", "token_amount", "token_acct_count"}
 	needAlterMap["block"] = []string{"number"}
-	needAlterMap["node"] = []string{"votes", "total_bounty", "extracted_bounty", "last_extract_time"}
+	needAlterMap["node"] = []string{"votes"}
 	needAlterMap["token_balance"] = []string{"balance"}
 	for tableName, columns := range needAlterMap {
 		for _, col := range columns {

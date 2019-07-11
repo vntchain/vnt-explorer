@@ -41,7 +41,10 @@ func (m *V12_20190528_172518) Up() {
 
 	m.SQL("ALTER TABLE `node` " +
 		"ADD COLUMN `city` varchar(255) NOT NULL DEFAULT '', " +
-		"ADD COLUMN `node_url` varchar(255) NOT NULL DEFAULT '';")
+		"ADD COLUMN `node_url` varchar(255) NOT NULL DEFAULT ''," +
+		"DROP COLUMN `total_bounty`, " +
+		"DROP COLUMN `extracted_bounty`, " +
+		"DROP COLUMN `last_extract_time`;")
 
 	m.SQL("CREATE TABLE IF NOT EXISTS `subscription` (" +
 		"`email` varchar(255) NOT NULL PRIMARY KEY," +
@@ -58,7 +61,10 @@ func (m *V12_20190528_172518) Down() {
 	m.SQL("DROP TABLE if exists `market_info`")
 	m.SQL("ALTER TABLE `node` " +
 		"DROP COLUMN `city`, " +
-		"DROP COLUMN `node_url`;")
+		"DROP COLUMN `node_url`," +
+		"ADD COLUMN `total_bounty` decimal(64,0), " +
+		"ADD COLUMN `extracted_bounty` decimal(64,0), " +
+		"ADD COLUMN `last_extract_time` decimal(64,0);")
 	m.SQL("DROP TABLE if exists `subscription`")
 
 }
