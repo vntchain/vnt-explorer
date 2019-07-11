@@ -334,11 +334,11 @@ func PersistBlock(number int64) {
 	// 区块奖励，0-47304000都是6个vnt，47304001-94608000是3个，再之后是1.5个
 	var staticReward float64
 	if block.Number >= 0 && block.Number <= 47304000 {
-		staticReward = 6
+		staticReward = 2.4
 	} else if block.Number >= 47304001 && block.Number <= 94608000 {
-		staticReward = 3
+		staticReward = 1.2
 	} else if block.Number >= 94608001 {
-		staticReward = 1.5
+		staticReward = 0.6
 	}
 
 	result := staticReward + dynamicReward
