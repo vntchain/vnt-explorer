@@ -89,7 +89,6 @@ func (this *AccountController) List() {
 }
 
 func (this *AccountController) Get() {
-	//beego.Info("params", this.Ctx.Input.Params())
 	address := this.Ctx.Input.Param(":address")
 	if len(address) == 0 {
 		this.ReturnErrorMsg("Failed to get address", "", "")

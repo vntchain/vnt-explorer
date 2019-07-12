@@ -10,18 +10,17 @@ type Node struct {
 	Home            string
 	Logo            string
 	Ip              string
-	IsSuper			int
-	IsAlive			int	`orm:"default(1)"`
+	IsSuper         int
+	IsAlive         int
 	Status          int `orm:"index"`
 	Votes           string
 	VotesFloat      float64 `orm:"-"`
-	VotesPercent	float32
-	TotalBounty     string
-	ExtractedBounty string
-	LastExtractTime string
+	VotesPercent    float32
 	Longitude       float64
 	Latitude        float64
 	Block           []*Block `orm:"reverse(many)"`
+	City            string
+	NodeUrl         string
 }
 
 func (n *Node) Insert() error {
@@ -73,4 +72,16 @@ func (n *Node) Count(isSuper int) (int64, error) {
 
 	qs = qs.SetCond(cond)
 	return qs.Count()
+}
+
+func (n *Node) All() ([]*Node, error) {
+	o := orm.NewOrm()
+	qs := o.QueryTable(n)
+	cond := orm.NewCondition()
+	cond = cond.And("status", 1)
+	qs = qs.SetCond(cond)
+
+	var nodes []*Node
+	_, err := qs.All(&nodes)
+	return nodes, err
 }

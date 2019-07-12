@@ -26,7 +26,7 @@ func CallRpc(rpc *common.Rpc) (error, *common.Response, *common.Error) {
 		return errors.New(msg), nil, nil
 	}
 
-	beego.Info("Will call rpc with request: ", buf.String())
+	beego.Debug("Will call rpc with request: ", buf.String())
 
 	resp, err := http.Post(rpcApi, common.H_ContentType, buf)
 

@@ -17,7 +17,7 @@ func (this *BasicTask) QueuedWork() int32 {
 func (this *BasicTask) PreDoWork(workRoutine int) {
 	qw := this.Pool.QueuedWork()
 	ar := this.Pool.ActiveRoutines()
-	beego.Info(fmt.Sprintf("*******> Task: %s WR: %d QW: %d AR: %d Total: %d\n",
+	beego.Debug(fmt.Sprintf("*******> Task: %s WR: %d QW: %d AR: %d Total: %d\n",
 		this.Name,
 		workRoutine,
 		qw,

@@ -36,7 +36,7 @@ type Erc20 struct {
 }
 
 func readAbi(abiPath string) abi.ABI {
-	beego.Info("Will read abi:", abiPath)
+	beego.Debug("Will read abi:", abiPath)
 	abiData, err := ioutil.ReadFile(abiPath)
 	if err != nil {
 		beego.Error("could not read abi: ", "error", err)
@@ -67,7 +67,7 @@ func IsTransfer(tx *models.Transaction) bool {
 func UpdateTokenBalance(token *models.Account, tx *models.Transaction) []string {
 	if IsTransfer(tx) {
 
-		beego.Info("This is a token transfer transaction:", tx.Hash)
+		beego.Debug("This is a token transfer transaction:", tx.Hash)
 		addrs := GetTransferAddrs(tx)
 
 		tx.IsToken = true
@@ -184,7 +184,7 @@ func GetAmount(token, addr string) string {
 	var _out *big.Int
 
 	outData, _ := utils.Decode(resp.Result.(string))
-	beego.Info(outData)
+	beego.Debug(outData)
 	err = Abi.Unpack(&_out, "GetAmount",  outData)
 
 	return _out.String()
@@ -204,7 +204,7 @@ func GetTotalSupply(token string) *big.Int {
 	var _out *big.Int
 
 	outData, _ := utils.Decode(resp.Result.(string))
-	beego.Info(outData)
+	beego.Debug(outData)
 	err = Abi.Unpack(&_out, "GetTotalSupply",  outData)
 
 	return _out
@@ -224,7 +224,7 @@ func GetDecimals(token string) *big.Int {
 	var _out *big.Int
 
 	outData, _ := utils.Decode(resp.Result.(string))
-	beego.Info(outData)
+	beego.Debug(outData)
 	err = Abi.Unpack(&_out, "GetDecimals",  outData)
 
 	return _out
@@ -244,7 +244,7 @@ func GetSymbol(token string) string {
 	var _out string
 
 	outData, _ := utils.Decode(resp.Result.(string))
-	beego.Info(outData)
+	beego.Debug(outData)
 	err = Abi.Unpack(&_out, "GetSymbol",  outData)
 
 	return _out
@@ -264,7 +264,7 @@ func GetTokenName(token string) string {
 	var _out string
 
 	outData, _ := utils.Decode(resp.Result.(string))
-	beego.Info(outData)
+	beego.Debug(outData)
 	err = Abi.Unpack(&_out, "GetTokenName",  outData)
 
 	return _out

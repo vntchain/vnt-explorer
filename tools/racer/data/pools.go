@@ -2,24 +2,29 @@ package data
 
 import (
 	"fmt"
-	"github.com/vntchain/vnt-explorer/models"
+	"path"
 	"runtime"
-	"github.com/astaxie/beego"
-	"github.com/vntchain/vnt-explorer/tools/racer/pool"
 	"strings"
+
+	"github.com/astaxie/beego"
+	"github.com/vntchain/vnt-explorer/common"
+	"github.com/vntchain/vnt-explorer/models"
+	"github.com/vntchain/vnt-explorer/tools/racer/pool"
 )
 
-var BlockPool = pool.New(runtime.NumCPU() * 3, 50)
-var BlockInsertPool = pool.New(runtime.NumCPU() * 3, 50)
-var TxPool = pool.New(runtime.NumCPU() * 3, 6000)
-var AccountExtractPool = pool.New(runtime.NumCPU() * 3, 6000)
-var AccountPool = pool.New(runtime.NumCPU() * 3, 10000)
-var WitnessesPool = pool.New(runtime.NumCPU() * 3, 100)
-var NodePool = pool.New(runtime.NumCPU() * 3, 100)
+var BlockPool = pool.New(runtime.NumCPU()*3, 50)
+var BlockInsertPool = pool.New(runtime.NumCPU()*3, 50)
+var TxPool = pool.New(runtime.NumCPU()*3, 6000)
+var AccountExtractPool = pool.New(runtime.NumCPU()*3, 6000)
+var AccountPool = pool.New(runtime.NumCPU()*3, 10000)
+var WitnessesPool = pool.New(runtime.NumCPU()*3, 100)
+var NodePool = pool.New(runtime.NumCPU()*3, 100)
+var NodeInfoPool = pool.New(runtime.NumCPU()*3, 100)
+var LogoPool = pool.New(runtime.NumCPU()*3, 100)
 
 type BlockTask struct {
 	pool.BasicTask
-	BlockNumber	int64
+	BlockNumber int64
 }
 
 func (this *BlockTask) DoWork(workRoutine int) {
@@ -28,7 +33,7 @@ func (this *BlockTask) DoWork(workRoutine int) {
 }
 
 func NewBlockTask(BlockNumber int64) *BlockTask {
-	return &BlockTask {
+	return &BlockTask{
 		BasicTask: pool.BasicTask{
 			Name: fmt.Sprintf("Block-%d", BlockNumber),
 			Pool: BlockPool,
@@ -39,12 +44,12 @@ func NewBlockTask(BlockNumber int64) *BlockTask {
 
 type BlockInsertTask struct {
 	pool.BasicTask
-	Block	*models.Block
+	Block *models.Block
 }
 
 func (this *BlockInsertTask) DoWork(workRoutine int) {
 	this.PreDoWork(workRoutine)
-	beego.Info("Will insert block:", this.Block.Number)
+	beego.Debug("Will insert block:", this.Block.Number)
 	err := this.Block.Insert()
 	if err != nil {
 		msg := fmt.Sprintf("Failed to insert or update block: %v, error: %s,", this.Block, err.Error())
@@ -53,7 +58,7 @@ func (this *BlockInsertTask) DoWork(workRoutine int) {
 }
 
 func NewBlockInsertTask(Block *models.Block) *BlockInsertTask {
-	return &BlockInsertTask {
+	return &BlockInsertTask{
 		BasicTask: pool.BasicTask{
 			Name: fmt.Sprintf("Block-Insert-%d", Block.Number),
 			Pool: BlockPool,
@@ -64,7 +69,7 @@ func NewBlockInsertTask(Block *models.Block) *BlockInsertTask {
 
 type TxTask struct {
 	pool.BasicTask
-	Tx	*models.Transaction
+	Tx *models.Transaction
 }
 
 func (this *TxTask) DoWork(workRoutine int) {
@@ -78,7 +83,7 @@ func (this *TxTask) DoWork(workRoutine int) {
 }
 
 func NewTxTask(Tx *models.Transaction) *TxTask {
-	return &TxTask {
+	return &TxTask{
 		BasicTask: pool.BasicTask{
 			Name: fmt.Sprintf("Tx-%s", Tx.Hash),
 			Pool: TxPool,
@@ -89,7 +94,7 @@ func NewTxTask(Tx *models.Transaction) *TxTask {
 
 type ExtractAccountTask struct {
 	pool.BasicTask
-	Tx		*models.Transaction
+	Tx *models.Transaction
 }
 
 func (this *ExtractAccountTask) DoWork(workRoutine int) {
@@ -99,7 +104,7 @@ func (this *ExtractAccountTask) DoWork(workRoutine int) {
 }
 
 func NewExtractAccountTask(Tx *models.Transaction) *ExtractAccountTask {
-	return &ExtractAccountTask {
+	return &ExtractAccountTask{
 		pool.BasicTask{
 			fmt.Sprintf("ext-account-%s", Tx.Hash),
 			AccountExtractPool,
@@ -115,8 +120,8 @@ const (
 
 type AccountTask struct {
 	pool.BasicTask
-	Account		*models.Account
-	Action		int
+	Account *models.Account
+	Action  int
 }
 
 func (this *AccountTask) DoWork(workRoutine int) {
@@ -145,7 +150,7 @@ func (this *AccountTask) DoWork(workRoutine int) {
 }
 
 func NewAccountTask(Account *models.Account, Action int) *AccountTask {
-	return &AccountTask {
+	return &AccountTask{
 		pool.BasicTask{
 			fmt.Sprintf("account-%s", Account.Address),
 			AccountPool,
@@ -157,8 +162,8 @@ func NewAccountTask(Account *models.Account, Action int) *AccountTask {
 
 type WitnessesTask struct {
 	pool.BasicTask
-	Witnesses		[]string
-	BlockNumber		uint64
+	Witnesses   []string
+	BlockNumber uint64
 }
 
 func (this *WitnessesTask) DoWork(workRoutine int) {
@@ -168,7 +173,7 @@ func (this *WitnessesTask) DoWork(workRoutine int) {
 }
 
 func NewWitnessesTask(Witnesses []string, BlockNumber uint64) *WitnessesTask {
-	return &WitnessesTask {
+	return &WitnessesTask{
 		pool.BasicTask{
 			"witnesses",
 			AccountPool,
@@ -177,7 +182,6 @@ func NewWitnessesTask(Witnesses []string, BlockNumber uint64) *WitnessesTask {
 		BlockNumber,
 	}
 }
-
 
 type NodesTask struct {
 	pool.BasicTask
@@ -201,6 +205,45 @@ func (this *NodesTask) DoWork(workRoutine int) {
 		} else {
 			node.IsSuper = 0
 		}
+		dbNode := &models.Node{}
+		dbNode.Get(node.Address)
+
+		// register account's Vname
+		account := GetAccount(node.Address)
+		if account != nil && account.Vname != node.Vname {
+			account.Vname = node.Vname
+			updateAcc(account)
+		}
+
+		// new node or node's home update, or node's location is unknown
+		// try to get nodeInfo otherwise copy the old data
+		if dbNode == nil {
+			PostNodeInfoTask(NewNodeInfoTask(node))
+		} else if dbNode.Home != node.Home ||
+			(dbNode.Latitude == 360 && dbNode.Longitude == 360) ||
+			dbNode.Logo == "" ||
+			(dbNode.Status == 0 && node.Status == 1) {
+			node.IsAlive = dbNode.IsAlive
+			PostNodeInfoTask(NewNodeInfoTask(node))
+		} else {
+			node.Longitude = dbNode.Longitude
+			node.Latitude = dbNode.Latitude
+			node.City = dbNode.City
+			node.Logo = dbNode.Logo
+			node.IsAlive = dbNode.IsAlive
+		}
+
+		// if logo file doesn't exist, try to download it
+		logoUrlList := strings.Split(node.Logo, ";")
+		for _, logoUrl := range logoUrlList {
+			imgName := path.Base(logoUrl)
+			imgPath := path.Join(common.IMAGE_PATH, node.Address, imgName)
+			if exists, _, _ := FileExists(imgPath); !exists {
+				if logoUrl != "" {
+					PostLogoTask(NewLogoTask(logoUrl, node.Address))
+				}
+			}
+		}
 		if err := node.Insert(); err != nil {
 			msg := fmt.Sprintf("Failed to insert node: %s", err.Error())
 			panic(msg)
@@ -209,11 +252,77 @@ func (this *NodesTask) DoWork(workRoutine int) {
 }
 
 func NewNodesTask() *NodesTask {
-	return &NodesTask {
+	return &NodesTask{
 		pool.BasicTask{
 			"nodes",
 			AccountPool,
 		},
+	}
+}
+
+type NodeInfoTask struct {
+	pool.BasicTask
+	Node *models.Node
+}
+
+func (this *NodeInfoTask) DoWork(workRoutine int) {
+	this.PreDoWork(workRoutine)
+
+	nodeInfo := GetBpInfo(this.Node.Home + "/bp.json")
+	if nodeInfo != nil {
+		this.Node.Latitude = nodeInfo.Location.Latitude
+		this.Node.Longitude = nodeInfo.Location.Longitude
+		this.Node.City = nodeInfo.Location.Name
+		logoUrlList := []string{
+			nodeInfo.Branding.Logo_256,
+			nodeInfo.Branding.Logo_1024,
+			nodeInfo.Branding.Logo_Svg,
+		}
+		nodeLogoList := []string{"", "", ""}
+		for i, url := range logoUrlList {
+			if url != "" {
+				nodeLogoList[i] = url
+				PostLogoTask(NewLogoTask(url, this.Node.Address))
+			}
+		}
+
+		this.Node.Logo = strings.Join(nodeLogoList, ";")
+		if err := this.Node.Insert(); err != nil {
+			msg := fmt.Sprintf("Failed to insert node: %s", err.Error())
+			beego.Error(msg)
+		}
+	}
+}
+
+func NewNodeInfoTask(Node *models.Node) *NodeInfoTask {
+	return &NodeInfoTask{
+		pool.BasicTask{
+			"nodeInfo",
+			NodeInfoPool,
+		},
+		Node,
+	}
+}
+
+type LogoTask struct {
+	pool.BasicTask
+	imgUrl  string
+	address string
+}
+
+func (this *LogoTask) DoWork(workRoutine int) {
+	this.PreDoWork(workRoutine)
+	GetLogo(this.imgUrl, this.address)
+}
+
+func NewLogoTask(imgUrl, address string) *LogoTask {
+	return &LogoTask{
+		pool.BasicTask{
+			"logo",
+			LogoPool,
+		},
+		imgUrl,
+		address,
 	}
 }
 
@@ -270,5 +379,19 @@ func PostNodesTask(task *NodesTask) {
 	if err != nil {
 		beego.Error("Nodes池满载！")
 		panic("")
+	}
+}
+
+func PostNodeInfoTask(task *NodeInfoTask) {
+	err := NodeInfoPool.PostWork("nodeInfo", task)
+	if err != nil {
+		beego.Error("NodeInfo池满载！")
+	}
+}
+
+func PostLogoTask(task *LogoTask) {
+	err := NodeInfoPool.PostWork("logo", task)
+	if err != nil {
+		beego.Error("Logo池满载！")
 	}
 }

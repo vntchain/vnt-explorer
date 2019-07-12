@@ -36,4 +36,6 @@ func registerModel() {
 	orm.RegisterModel(new(TokenBalance))
 	orm.RegisterModel(new(Transaction))
 	orm.RegisterModel(new(Hydrant))
+	orm.RegisterModel(new(MarketInfo))
+	orm.RegisterModel(new(Subscription))
 }

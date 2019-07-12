@@ -54,7 +54,7 @@ func (this *TokenTask) DoWork(workRoutine int) {
 			panic(msg)
 		}
 
-		beego.Info("Success to insert token balance:", tokenBalance.Token, tokenBalance.Account, tokenBalance.Balance)
+		beego.Debug("Success to insert token balance:", tokenBalance.Token, tokenBalance.Account, tokenBalance.Balance)
 	} else if err != nil {
 		msg := fmt.Sprintf("Failed to get token balance, token:%s, address:%s",
 			tokenBalance.Token, tokenBalance.Account)
@@ -69,7 +69,7 @@ func (this *TokenTask) DoWork(workRoutine int) {
 			beego.Error(msg)
 			panic(msg)
 		}
-		beego.Info("Success to update token balance:", tokenBalance.Token, tokenBalance.Account, tokenBalance.Balance)
+		beego.Debug("Success to update token balance:", tokenBalance.Token, tokenBalance.Account, tokenBalance.Balance)
 	}
 }
 
