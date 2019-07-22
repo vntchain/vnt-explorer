@@ -718,6 +718,8 @@ func InsertGenius() {
 					TokenAcctCount: "0",
 					InitTx:         "Genius_"+account.Address,
 					LastTx:         "Genius_"+account.Address,
+					Percent:		account.Percent,
+
 				}
 				if err = account.Insert(); err != nil {
 					fmt.Println("Failed to insert account: ", account.Address, " ,err", err)
@@ -730,6 +732,7 @@ func InsertGenius() {
 		} else {
 			fmt.Println("Updating account: ", account.Address)
 			a.Balance = account.Balance
+			a.Percent = account.Percent
 			a.TxCount += 1
 			if err := a.Update(); err != nil {
 				fmt.Println("Failed to update account: ", account.Address, " ,err", err)
