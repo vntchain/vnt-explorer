@@ -5,6 +5,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"time"
+	"github.com/astaxie/beego/httplib"
 )
 
 type Param struct {
@@ -13,7 +15,11 @@ type Param struct {
 }
 
 func CallApi(requestUrl string, params []Param) ([]byte, error) {
-	client := &http.Client{}
+	client := &http.Client{
+		Transport: &http.Transport{
+			Dial: httplib.TimeoutDialer(1 * time.Second, 1 * time.Second),
+		},
+	}
 	req, err := http.NewRequest("GET", requestUrl, nil)
 	if err != nil {
 		return nil, err

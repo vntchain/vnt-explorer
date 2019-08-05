@@ -2,14 +2,14 @@ package data
 
 import (
 	"fmt"
-	"path"
 	"runtime"
 	"strings"
 
 	"github.com/astaxie/beego"
-	"github.com/vntchain/vnt-explorer/common"
 	"github.com/vntchain/vnt-explorer/models"
 	"github.com/vntchain/vnt-explorer/tools/racer/pool"
+	"path"
+	"github.com/vntchain/vnt-explorer/common"
 )
 
 var BlockPool = pool.New(runtime.NumCPU()*3, 50)
@@ -234,16 +234,19 @@ func (this *NodesTask) DoWork(workRoutine int) {
 		}
 
 		// if logo file doesn't exist, try to download it
-		logoUrlList := strings.Split(node.Logo, ";")
-		for _, logoUrl := range logoUrlList {
-			imgName := path.Base(logoUrl)
-			imgPath := path.Join(common.IMAGE_PATH, node.Address, imgName)
-			if exists, _, _ := FileExists(imgPath); !exists {
-				if logoUrl != "" {
-					PostLogoTask(NewLogoTask(logoUrl, node.Address))
+		if len(node.Logo) > 0 {
+			logoUrlList := strings.Split(node.Logo, ";")
+			for _, logoUrl := range logoUrlList {
+				imgName := path.Base(logoUrl)
+				imgPath := path.Join(common.IMAGE_PATH, node.Address, imgName)
+				if exists, _, _ := FileExists(imgPath); !exists {
+					if logoUrl != "" {
+						PostLogoTask(NewLogoTask(logoUrl, node.Address))
+					}
 				}
 			}
 		}
+
 		if err := node.Insert(); err != nil {
 			msg := fmt.Sprintf("Failed to insert node: %s", err.Error())
 			panic(msg)
@@ -267,6 +270,10 @@ type NodeInfoTask struct {
 
 func (this *NodeInfoTask) DoWork(workRoutine int) {
 	this.PreDoWork(workRoutine)
+
+	if len(this.Node.Home) == 0 {
+		return
+	}
 
 	nodeInfo := GetBpInfo(this.Node.Home + "/bp.json")
 	if nodeInfo != nil {
