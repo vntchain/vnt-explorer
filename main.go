@@ -10,7 +10,7 @@ import (
 
 func main() {
 	common.InitLogLevel()
-	orm.Debug = true
+	orm.Debug = false
 	beego.InsertFilter("*", beego.BeforeRouter, cors.Allow(&cors.Options{
 		AllowAllOrigins:  true,
 		AllowMethods:     []string{"PUT", "PATCH", "POST"},

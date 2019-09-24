@@ -275,7 +275,7 @@ func (this *NodeInfoTask) DoWork(workRoutine int) {
 		return
 	}
 
-	nodeInfo := GetBpInfo(this.Node.Home + "/bp.json")
+	nodeInfo := GetBpInfo("http://" + this.Node.Home + "/bp.json")
 	if nodeInfo != nil {
 		this.Node.Latitude = nodeInfo.Location.Latitude
 		this.Node.Longitude = nodeInfo.Location.Longitude
