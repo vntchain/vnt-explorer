@@ -18,10 +18,10 @@ import (
 )
 
 type BpInfo struct {
-	Candidate_Name string
+	Candidate_Name    string
 	Candidate_Address string
-	Location       Location
-	Branding       Branding
+	Location          Location
+	Branding          Branding
 }
 type Location struct {
 	Name      string
