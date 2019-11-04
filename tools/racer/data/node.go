@@ -19,11 +19,13 @@ import (
 
 type BpInfo struct {
 	Candidate_Name string
+	Candidate_Address string
 	Location       Location
 	Branding       Branding
 }
 type Location struct {
 	Name      string
+	Country   string
 	Latitude  float64
 	Longitude float64
 }
@@ -111,6 +113,7 @@ func GetNodes() []*models.Node {
 func GetBpInfo(website string) (bp *BpInfo) {
 	body, err := utils.CallApi(website, nil)
 	if err != nil {
+		beego.Error("Faile to CallApi ", website, " error  ", err.Error())
 		return nil
 	}
 

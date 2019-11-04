@@ -275,7 +275,9 @@ func (this *NodeInfoTask) DoWork(workRoutine int) {
 		return
 	}
 
-	nodeInfo := GetBpInfo(this.Node.Home + "/bp.json")
+	//nodeInfo := GetBpInfo(this.Node.Home + "/bp.json")
+	nodeInfo := GetBpInfo("https://"+ this.Node.Home + "/bp.json")
+	beego.Info("Get nodeInfo ", this.Node.Home, nodeInfo)
 	if nodeInfo != nil {
 		this.Node.Latitude = nodeInfo.Location.Latitude
 		this.Node.Longitude = nodeInfo.Location.Longitude
