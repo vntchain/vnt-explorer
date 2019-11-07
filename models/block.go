@@ -153,6 +153,18 @@ func (b *Block) TopTpsBlock() (*Block, error) {
 
 func (b *Block) Count() (int64, error) {
 	o := orm.NewOrm()
-	cnt, err := o.QueryTable(b).Count()
-	return cnt, err
+	//cnt, err := o.QueryTable(b).Count()
+	//return cnt, err
+	var list orm.ParamsList
+	_, err := o.Raw("SELECT MAX(number) FROM block").ValuesFlat(&list)
+	if err != nil {
+		beego.Error("block table query max block num failed", err.Error())
+		return 0, err
+	}
+	if list[0] != nil {
+		num, err := strconv.Atoi(list[0].(string))
+		return int64(num + 1), err
+	} else {
+		return 0, fmt.Errorf("block count failed")
+	}
 }

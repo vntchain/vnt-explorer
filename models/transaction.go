@@ -1,12 +1,15 @@
 package models
 
 import (
+	"fmt"
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/orm"
+	"strconv"
 )
 
 type Transaction struct {
-	Hash         string   `orm:"pk"`
+	Id           uint64   `pk:"auto"`
+	Hash         string   `orm:"unique"`
 	TimeStamp    uint64   `orm:"index"`
 	From         string   `orm:"index"`
 	FromDetail   *Account `orm:"-"`
@@ -136,8 +139,27 @@ func (t *Transaction) Get(hash string, fields ...string) (*Transaction, error) {
 	return t, err
 }
 
+func (t *Transaction) MaxId()(int64, error) {
+	o := orm.NewOrm()
+	var list orm.ParamsList
+	_, err := o.Raw("SELECT MAX(id) FROM transaction").ValuesFlat(&list)
+	if err != nil {
+		beego.Error("transaction table query max id failed", err.Error())
+		return 0, err
+	}
+	if list[0] != nil {
+		num, err := strconv.Atoi(list[0].(string))
+		return int64(num + 1), err
+	} else {
+		return 0, fmt.Errorf("transaction max id failed")
+	}
+}
+
 func (t *Transaction) Count(block string, account string, isToken int, from string, start, end int64) (int64, error) {
 	o := orm.NewOrm()
+	if block == "" && account == "" && isToken == -1 && from == "" && start == -1 && end == -1 {
+		return t.MaxId()
+	}
 	qs := o.QueryTable(t)
 	cond := makeCond(block, account, isToken, from, start, end)
 

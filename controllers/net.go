@@ -26,12 +26,18 @@ type SearchBody struct {
 
 func (this *NetController) Stats() {
 	block := &models.Block{}
-	block, err := block.Last()
+
+	height, err := block.Count()
 	if err != nil {
 		this.ReturnErrorMsg("Failed to get block height: %s", err.Error(), "")
 	}
 
-	height := block.Number + 1
+	//height := block.Number + 1
+	var blkNum uint64
+	if height > 0 {
+		blkNum = uint64(height - 1)
+	}
+	block, err = block.GetByNumber(blkNum)
 	currTps := block.Tps
 	topTpsBlock, err := block.TopTpsBlock()
 	if err != nil {
@@ -60,7 +66,7 @@ func (this *NetController) Stats() {
 	}
 
 	stats := &NetStats{
-		height,
+		uint64(height),
 		currTps,
 		topTps,
 		txCount,
