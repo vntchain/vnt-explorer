@@ -319,11 +319,6 @@ func PersistBlock(number int64) {
 		dynamicReward += float64(tx.GasUsed) * (float64(tmp) / 1e18)
 	}
 
-	//如果有新交易产生，把最新的5条交易放入文件中
-	if len(txs) > 0 {
-
-	}
-
 	block.TxCount = len(txs)
 	time := float32(2.0)
 	if lastBlock != nil {
