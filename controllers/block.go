@@ -52,7 +52,12 @@ func (this *BlockController) List() {
 		this.ReturnErrorMsg("Failed to list blocks: %s", err.Error(), "")
 	} else {
 		count := make(map[string]int64)
-		count["count"], err = block.Count()
+		if limit == 5 {
+			count["count"] = 5
+		} else {
+			count["count"], err = block.Count()
+		}
+
 		if err != nil {
 			this.ReturnErrorMsg("Failed to list blocks: %s", err.Error(), "")
 			return
