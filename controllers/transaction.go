@@ -64,12 +64,15 @@ func (this *TransactionController) List() {
 
 	tx := &models.Transaction{}
 	txs, err := tx.List(offset, limit, order, block, account, isToken, from, -1, -1, fields...)
-
 	if err != nil {
 		this.ReturnErrorMsg("Failed to list transactions: ", err.Error(), "")
 	} else {
 		count := make(map[string]int64)
-		count["count"], err = tx.Count(block, account, isToken, from, -1, -1)
+		if limit == 5 {
+			count["count"] = 5
+		} else {
+			count["count"], err = tx.Count(block, account, isToken, from, -1, -1)
+		}
 		if err != nil {
 			this.ReturnErrorMsg("Failed to list TokenBalance: %s", err.Error(), "")
 			return

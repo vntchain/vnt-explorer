@@ -5,6 +5,7 @@ import (
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/orm"
 	_ "github.com/go-sql-driver/mysql"
+	"time"
 )
 
 func init() {
@@ -17,6 +18,8 @@ func init() {
 	dbhost := beego.AppConfig.String("mysql::host")
 	dbport := beego.AppConfig.String("mysql::port")
 	dbname := beego.AppConfig.String("mysql::db")
+	maxconnects := beego.AppConfig.DefaultInt("mysql::maxconnects", 900)
+	maxidle := beego.AppConfig.DefaultInt("mysql::maxidle", 100)
 
 	//dbUrl := fmt.Sprintf("%s:%s@/%s?charset=utf8", dbuser, dbpass, dbname)
 	dbUrl := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8", dbuser, dbpass, dbhost, dbport, dbname)
@@ -26,6 +29,15 @@ func init() {
 		beego.Error("failed to register database", err)
 		panic(err.Error())
 	}
+
+	db, err := orm.GetDB("default")
+	if err != nil {
+		beego.Error("orm get db failed, err", err)
+	}
+
+	db.SetMaxOpenConns(maxconnects)
+	db.SetMaxIdleConns(maxidle)
+	db.SetConnMaxLifetime(time.Hour)
 }
 
 func registerModel() {
