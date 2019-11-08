@@ -39,11 +39,11 @@ func (this *NetController) Stats() {
 	}
 	block, err = block.GetByNumber(blkNum)
 	currTps := block.Tps
-	topTpsBlock, err := block.TopTpsBlock()
+	topTps, err := block.TopTpsBlock()
 	if err != nil {
 		this.ReturnErrorMsg("Failed to get top tps: %s", err.Error(), "")
 	}
-	topTps := topTpsBlock.Tps
+	//topTps := topTpsBlock.Tps
 
 	tx := &models.Transaction{}
 	txCount, err := tx.Count("", "", -1, "", -1, -1)

@@ -132,23 +132,36 @@ func (b *Block) Last() (*Block, error) {
 	return blocks[0], nil
 }
 
-func (b *Block) TopTpsBlock() (*Block, error) {
+func (b *Block) TopTpsBlock() (float32, error) {
 	o := orm.NewOrm()
 
-	qs := o.QueryTable(b).OrderBy("-tps").Limit(1)
-
-	var blocks []*Block
-	_, err := qs.All(&blocks)
-
+	//qs := o.QueryTable(b).OrderBy("-tps").Limit(1)
+	//
+	//var blocks []*Block
+	//_, err := qs.All(&blocks)
+	//
+	//if err != nil {
+	//	return nil, err
+	//}
+	//
+	//if len(blocks) == 0 {
+	//	return nil, nil
+	//}
+	//
+	//return blocks[0], nil
+	var list orm.ParamsList
+	_, err := o.Raw("SELECT MAX(tps) FROM block").ValuesFlat(&list)
 	if err != nil {
-		return nil, err
+		beego.Error("block table query max tps failed", err.Error())
+		return 0.0, err
+	}
+	if list[0] != nil {
+		topTps, err := strconv.ParseFloat(list[0].(string), 32)
+		return float32(topTps), err
+	} else {
+		return 0.0, fmt.Errorf("block toptps failed")
 	}
 
-	if len(blocks) == 0 {
-		return nil, nil
-	}
-
-	return blocks[0], nil
 }
 
 func (b *Block) Count() (int64, error) {
