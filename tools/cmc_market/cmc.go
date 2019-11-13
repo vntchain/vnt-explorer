@@ -6,7 +6,6 @@ import (
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/httplib"
 	"github.com/vntchain/vnt-explorer/common"
-	"github.com/vntchain/vnt-explorer/common/utils"
 	"github.com/vntchain/vnt-explorer/models"
 	"io/ioutil"
 	"net/http"
@@ -73,6 +72,8 @@ func UpdateCoinMarketToDB() {
 		Transport: &http.Transport{
 			Dial: httplib.TimeoutDialer(5 * time.Second, 5 * time.Second),
 			DisableKeepAlives:true,
+			MaxIdleConns:10,
+			MaxConnsPerHost:10,
 		},
 	}
 	req, err := http.NewRequest("GET","https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest", nil)
@@ -152,20 +153,35 @@ type rateData struct {
 
 func GetExchangeRate() (float64, error) {
 	url := "http://apicloud.mob.com/exchange/rmbquot/query?key=2970534a3dbfe&bank=1"
-	//resp, err := http.Get(url)
-	//if err != nil {
-	//	beego.Error("Get exchange rate is failed, err ", err)
-	//	return 0.0, err
-	//}
-	//respByte, err := ioutil.ReadAll(resp.Body)
-	//if err != nil {
-	//	beego.Error("Get resp body failed, err ", err)
-	//	return 0.0, err
-	//}
-	//str := string(respByte)
-	resp, err := utils.CallApi(url, nil)
+	client := &http.Client{
+		Transport: &http.Transport{
+			Dial: httplib.TimeoutDialer(5 * time.Second, 5 * time.Second),
+			DisableKeepAlives:true,
+			MaxIdleConns:10,
+			MaxConnsPerHost:10,
+		},
+	}
+	req, err := http.NewRequest("GET",url, nil)
+	if err != nil {
+		beego.Error("Get exchange rate info for cmc failed ",err)
+		return 0.0, err
+	}
+	resp, err := client.Do(req);
+	if err != nil {
+		beego.Error("Error sending request to server in cmc")
+		return 0.0, err
+	}
+	defer resp.Body.Close()
+
+	respByte, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		beego.Error("Get resp body failed in cmc, err ", err)
+		return 0.0, err
+	}
+	str := string(respByte)
+
 	var data *rateData
-	if err = json.Unmarshal(resp, &data); err != nil {
+	if err = json.Unmarshal([]byte(str), &data); err != nil {
 		beego.Error(err)
 		return 0.0, err
 	}
