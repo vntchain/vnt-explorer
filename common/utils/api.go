@@ -18,6 +18,7 @@ func CallApi(requestUrl string, params []Param) ([]byte, error) {
 	client := &http.Client{
 		Transport: &http.Transport{
 			Dial: httplib.TimeoutDialer(5 * time.Second, 5 * time.Second),
+			DisableKeepAlives:true,
 		},
 	}
 	req, err := http.NewRequest("GET", requestUrl, nil)
